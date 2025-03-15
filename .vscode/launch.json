@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.py",  // 确保路径正确
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"  // 添加项目根目录到 PYTHONPATH
+            },
+            "args": [
+                "--is_training", "1",        // 示例值，设置为你的实际值
+                "--model_id", "weather_96_96",        // 示例值，设置为你的实际值
+                "--model", "CycleNet",        // 示例值，设置为你的实际值
+                "--data", "custom"           // 示例值，设置为你的实际值
+            ],
+        }
+    ]
+}

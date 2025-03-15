@@ -31,11 +31,18 @@ parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='l
 parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
 parser.add_argument('--label_len', type=int, default=0, help='start token length')  #fixed
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
+parser.add_argument('--seasonal_patterns', type=str, default='Monthly', help='subset for M4')
+parser.add_argument('--inverse', action='store_true', help='inverse output data', default=False)
 
 # CycleNet.
-parser.add_argument('--cycle', type=int, default=24, help='cycle length')
+parser.add_argument('--cycle', type=int, default=144, help='cycle length')
 parser.add_argument('--model_type', type=str, default='mlp', help='model type, options: [linear, mlp]')
 parser.add_argument('--use_revin', type=int, default=1, help='1: use revin or 0: no revin')
+
+#Multiscale_DRPK
+parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily OR daily+weekly+monthly OR daily+weekly+monthly+yearly]')
+parser.add_argument('--pattern_nums', type=int, default=1, help='time_pattern_nums')
+
 
 # DLinear
 #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -64,9 +71,9 @@ parser.add_argument('--period_len', type=int, default=24, help='period_len')
 
 # Formers 
 parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
-parser.add_argument('--enc_in', type=int, default=7, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
-parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
-parser.add_argument('--c_out', type=int, default=7, help='output size')
+parser.add_argument('--enc_in', type=int, default=21, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
+parser.add_argument('--dec_in', type=int, default=21, help='decoder input size')
+parser.add_argument('--c_out', type=int, default=21, help='output size')
 parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
 parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
 parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
@@ -129,7 +136,7 @@ if args.is_training:
     for ii in range(args.itr):
 
         # setting record of experiments
-        setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_{}_seed{}'.format(
+        setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
             args.model_id,
             args.model,
             args.data,
@@ -137,6 +144,8 @@ if args.is_training:
             args.seq_len,
             args.pred_len,
             args.cycle,
+            args.cycle_pattern,
+            args.pattern_nums,
             args.model_type,
             fix_seed)
 
@@ -154,7 +163,7 @@ if args.is_training:
         torch.cuda.empty_cache()
 else:
     ii = 0
-    setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_{}_seed{}'.format(
+    setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
         args.model_id,
         args.model,
         args.data,
@@ -162,6 +171,8 @@ else:
         args.seq_len,
         args.pred_len,
         args.cycle,
+        args.cycle_pattern,
+        args.pattern_nums,
         args.model_type,
         fix_seed)
 

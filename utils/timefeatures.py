@@ -21,56 +21,59 @@ class SecondOfMinute(TimeFeature):
     """Minute of hour encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return index.second / 59.0 - 0.5
+        return index.second / 59.0
 
 
 class MinuteOfHour(TimeFeature):
     """Minute of hour encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return index.minute / 59.0 - 0.5
+        return index.minute / 59.0
 
 
 class HourOfDay(TimeFeature):
-    """Hour of day encoded as value between [-0.5, 0.5]"""
+    """Hour of day encoded as value between [0, 1)"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return index.hour / 23.0 - 0.5
+        # 计算时刻在一天中的比例，类似于 time_of_day
+        steps_per_day = 24  # 一天有 24 个时间步
+        tod = [i % steps_per_day / steps_per_day for i in range(len(index))]
+        tod = np.array(tod)
+        return tod
 
 
 class DayOfWeek(TimeFeature):
     """Hour of day encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return index.dayofweek / 6.0 - 0.5
-
+        return index.dayofweek / 7.0 
 
 class DayOfMonth(TimeFeature):
     """Day of month encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return (index.day - 1) / 30.0 - 0.5
+        return (index.day - 1) / 31.0 
 
 
 class DayOfYear(TimeFeature):
     """Day of year encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return (index.dayofyear - 1) / 365.0 - 0.5
+        return (index.dayofyear - 1) / 366.0 
 
 
 class MonthOfYear(TimeFeature):
     """Month of year encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return (index.month - 1) / 11.0 - 0.5
+        return (index.month - 1) / 12.0 
 
 
 class WeekOfYear(TimeFeature):
     """Week of year encoded as value between [-0.5, 0.5]"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        return (index.isocalendar().week - 1) / 52.0 - 0.5
+        return (index.isocalendar().week - 1) / 52.0 
 
 
 def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
@@ -89,7 +92,7 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
         offsets.Week: [DayOfMonth, WeekOfYear],
         offsets.Day: [DayOfWeek, DayOfMonth, DayOfYear],
         offsets.BusinessDay: [DayOfWeek, DayOfMonth, DayOfYear],
-        offsets.Hour: [HourOfDay, DayOfWeek, DayOfMonth, DayOfYear],
+        offsets.Hour: [MinuteOfHour,HourOfDay, DayOfWeek, DayOfMonth, DayOfYear],
         offsets.Minute: [
             MinuteOfHour,
             HourOfDay,
