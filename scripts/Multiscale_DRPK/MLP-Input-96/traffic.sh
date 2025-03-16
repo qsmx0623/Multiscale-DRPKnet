@@ -1,16 +1,16 @@
-model_name=CycleNet
+model_name=Multiscale_DRPK
 
-root_path_name=./dataset/
-data_path_name=traffic.csv
-model_id_name=traffic
+root_path_name=/home/qsmx/Data/
+data_path_name=Traffic.csv
+model_id_name=Traffic
 data_name=custom
-
+cycle_pattern=daily+weekly+monthly+yearly
 
 model_type='mlp'
 seq_len=96
-for pred_len in 96 192 336 720
+for pred_len in 96 192 336 720 960 1024 1240 1688
 do
-for random_seed in 2024 2025 2026 2027 2028
+for random_seed in 2024
 do
     python -u run.py \
       --is_training 1 \
@@ -19,14 +19,21 @@ do
       --model_id $model_id_name'_'$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
+      --freq h\
       --features M \
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 862 \
       --cycle 168 \
+      --cycle_pattern $cycle_pattern\
+      --pattern_nums 4\
       --model_type $model_type \
       --train_epochs 30 \
       --patience 5 \
-      --itr 1 --batch_size 64 --learning_rate 0.002 --random_seed $random_seed
+      --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
+      --use_gpu True \
+      --gpu 0\
+      --devices '0,1' \
+      --use_multi_gpu 
 done
 done
