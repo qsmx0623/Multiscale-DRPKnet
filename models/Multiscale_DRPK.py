@@ -149,7 +149,8 @@ class Model(nn.Module):
         self.use_revin = configs.use_revin
         self.cycle_pattern = configs.cycle_pattern
         self.pattern_nums = configs.pattern_nums
-        self.drn = DRPKNet(hidden_dim = 64, K=self.pattern_nums)  
+        self.drpkn = DRPKNet(hidden_dim = 64, K=self.pattern_nums)  
+        # self.drn = DRNet(hidden_dim = 64, K=self.pattern_nums) 消融先验知识的实验
 
         self.cycleQueue = RecurrentCycle(cycle_len=self.cycle_len, channel_size=self.enc_in)
 
@@ -193,8 +194,8 @@ class Model(nn.Module):
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
-                reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
-                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  # 形状 [256, 336, 3]
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
                 channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
@@ -202,11 +203,67 @@ class Model(nn.Module):
                 # 将每个通道的重构信号添加到列表中
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
 
-                # 将每个通道的重构信号拼接起来，得到 [B, L, 9]
+                # 将每个通道的重构信号拼接起来，得到 [B, L, K+2]
                 reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
 
                 # add back the cycle of the output data
-                    # y = y1 + y2 + error
+                y = reconstructed_signal
+            
+            # instance denorm
+            if self.use_revin:
+                y = y * torch.sqrt(seq_var) + seq_mean
+
+        elif self.cycle_pattern == 'hourly+daily':
+            cycle_index_hourly = x_mark[..., 0] * self.cycle_len
+            cycle_index_daily = x_mark[..., 1] * self.cycle_len * 7
+            cycle_index_hourly = cycle_index_hourly[:, -1]
+            cycle_index_daily = cycle_index_daily[:, -1]
+            #cycle_index_weekly = x_mark[..., 2] * 7  # 每周周期
+            cycle_index = cycle_index_hourly + cycle_index_daily 
+
+            # instance norm
+            if self.use_revin:
+                seq_mean = torch.mean(x, dim=1, keepdim=True)
+                seq_var = torch.var(x, dim=1, keepdim=True) + 1e-5
+                x = (x - seq_mean) / torch.sqrt(seq_var)
+        
+            pred = self.model(x.permute(0, 2, 1)).permute(0, 2, 1)
+
+            x0 = x - self.cycleQueue(cycle_index_hourly, self.seq_len)
+            # forecasting with channel independence (parameters-sharing)
+            y0 = self.model(x0.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x1 = x - self.cycleQueue(cycle_index_daily, self.seq_len)
+            # forecasting with channel independence (parameters-sharing)
+            y1 = self.model(x1.permute(0, 2, 1)).permute(0, 2, 1)
+
+            error = self.cycleQueue((cycle_index + self.seq_len) % self.cycle_len, self.pred_len)
+
+            # 初始化一个空的列表来保存每个通道的重构信号
+            reconstructed_signal_list = []
+
+            # 遍历每个通道
+            for i in range(y1.shape[2]):
+            # 获取当前通道的pred y1, y2, y3 和 error
+                current_pred = pred[:, :, i]
+                imfs = torch.stack([y0[:, :, i], y1[:, :, i]], dim=2) 
+                current_error = error[:, :, i]  # 形状 [B, L]
+        
+                # 通过 DRNet 计算当前通道的重构信号和权重
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
+
+                # 计算重构信号
+                channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
+
+                # 将每个通道的重构信号添加到列表中
+                reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
+
+                # 将每个通道的重构信号拼接起来
+                reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
+
+                # add back the cycle of the output data
                 y = reconstructed_signal
             
             # instance denorm
@@ -249,12 +306,12 @@ class Model(nn.Module):
             for i in range(y1.shape[2]):
             # 获取当前通道的pred y1, y2, y3 和 error
                 current_pred = pred[:, :, i]
-                imfs = torch.stack([y1[:, :, i], y2[:, :, i]], dim=2)  # 形状 [B, L, 2]
+                imfs = torch.stack([y1[:, :, i], y2[:, :, i]], dim=2)  
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
-                reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
-                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  # 形状 [256, 336, 3]
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
                 channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
@@ -262,11 +319,80 @@ class Model(nn.Module):
                 # 将每个通道的重构信号添加到列表中
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
 
-                # 将每个通道的重构信号拼接起来，得到 [B, L, 9]
+                # 将每个通道的重构信号拼接起来
                 reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
 
                 # add back the cycle of the output data
-                    # y = y1 + y2 + error
+                y = reconstructed_signal
+            
+            # instance denorm
+            if self.use_revin:
+                y = y * torch.sqrt(seq_var) + seq_mean
+                
+        elif self.cycle_pattern == 'hourly+daily+weekly':
+            cycle_index_hourly = x_mark[..., 0] * self.cycle_len  # 每小时周期
+            cycle_index_daily = x_mark[..., 1] * self.cycle_len * 7  # 每日周期
+            cycle_index_weekly = x_mark[..., 2] * 7  # 每周周期
+            # cycle_index_monthly = x_mark[..., 3] * self.cycle_len * 30  # 每月周期，假设每月30天
+            # cycle_index_yearly = x_mark[..., 4] * self.cycle_len * 366  # 每年周期，假设每年366天
+            cycle_index_hourly =cycle_index_hourly[:, -1]
+            cycle_index_daily = cycle_index_daily[:, -1]
+            cycle_index_weekly = cycle_index_weekly[:, -1]
+            # cycle_index_monthly = cycle_index_monthly[:, -1]
+            # cycle_index_yearly = cycle_index_yearly[:, -1]
+            cycle_index = cycle_index_hourly + cycle_index_daily + cycle_index_weekly   # 合并
+
+            # instance norm
+            if self.use_revin:
+                seq_mean = torch.mean(x, dim=1, keepdim=True)
+                seq_var = torch.var(x, dim=1, keepdim=True) + 1e-5
+                x = (x - seq_mean) / torch.sqrt(seq_var)
+        
+            pred = self.model(x.permute(0, 2, 1)).permute(0, 2, 1)
+            # remove the cycle of the input data
+            x0 = x - self.cycleQueue(cycle_index_hourly, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y0 = self.model(x0.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x1 = x - self.cycleQueue(cycle_index_daily, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y1 = self.model(x1.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x2 = x - self.cycleQueue(cycle_index_weekly, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y2 = self.model(x2.permute(0, 2, 1)).permute(0, 2, 1)
+
+            error = self.cycleQueue((cycle_index + self.seq_len) % self.cycle_len, self.pred_len)
+
+            # 初始化一个空的列表来保存每个通道的重构信号
+            reconstructed_signal_list = []
+
+            # 遍历每个通道
+            for i in range(y1.shape[2]):
+            # 获取当前通道的pred y1, y2, y3 和 error
+                current_pred = pred[:, :, i]
+                imfs = torch.stack([y0[:, :, i], y1[:, :, i], y2[:, :, i]], dim=2) 
+                current_error = error[:, :, i]  # 形状 [B, L]
+        
+                # 通过 DRNet 计算当前通道的重构信号和权重
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
+
+                # 计算重构信号
+                channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
+
+                # 将每个通道的重构信号添加到列表中
+                reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
+
+                # 将每个通道的重构信号拼接起来
+                reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
+
+                # add back the cycle of the output data
                 y = reconstructed_signal
             
             # instance denorm
@@ -280,7 +406,7 @@ class Model(nn.Module):
             cycle_index_daily = cycle_index_daily[:, -1]
             cycle_index_weekly = cycle_index_weekly[:, -1]
             cycle_index_monthly = cycle_index_monthly[:, -1]
-            cycle_index = cycle_index_daily + cycle_index_weekly + cycle_index_monthly  # 合并每日、每周和每月周期
+            cycle_index = cycle_index_daily + cycle_index_weekly + cycle_index_monthly  # 合并
 
             # instance norm
             if self.use_revin:
@@ -315,12 +441,12 @@ class Model(nn.Module):
             for i in range(y1.shape[2]):
             # 获取当前通道的pred y1, y2, y3 和 error
                 current_pred = pred[:, :, i]
-                imfs = torch.stack([y1[:, :, i], y2[:, :, i], y3[:, :, i]], dim=2)  # 形状 [B, L, 2]
+                imfs = torch.stack([y1[:, :, i], y2[:, :, i], y3[:, :, i]], dim=2)  
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
                 reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
-                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  # 形状 [256, 336, 3]
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
                 channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
@@ -328,11 +454,85 @@ class Model(nn.Module):
                 # 将每个通道的重构信号添加到列表中
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
 
-                # 将每个通道的重构信号拼接起来，得到 [B, L, 9]
+                # 将每个通道的重构信号拼接起来
                 reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
 
                 # add back the cycle of the output data
-                    # y = y1 + y2 + error
+                y = reconstructed_signal
+            
+            # instance denorm
+            if self.use_revin:
+                y = y * torch.sqrt(seq_var) + seq_mean
+        
+        elif self.cycle_pattern == 'hourly+daily+weekly+monthly':
+            cycle_index_hourly = x_mark[..., 0] * self.cycle_len  # 每小时周期
+            cycle_index_daily = x_mark[..., 1] * self.cycle_len * 7  # 每日周期
+            cycle_index_weekly = x_mark[..., 2] * 7  # 每周周期
+            cycle_index_monthly = x_mark[..., 3] * self.cycle_len * 30  # 每月周期，假设每月30天
+            # cycle_index_yearly = x_mark[..., 4] * self.cycle_len * 366  # 每年周期，假设每年366天
+            cycle_index_hourly =cycle_index_hourly[:, -1]
+            cycle_index_daily = cycle_index_daily[:, -1]
+            cycle_index_weekly = cycle_index_weekly[:, -1]
+            cycle_index_monthly = cycle_index_monthly[:, -1]
+            # cycle_index_yearly = cycle_index_yearly[:, -1]
+            cycle_index = cycle_index_hourly + cycle_index_daily + cycle_index_weekly + cycle_index_monthly  # 合并
+
+            # instance norm
+            if self.use_revin:
+                seq_mean = torch.mean(x, dim=1, keepdim=True)
+                seq_var = torch.var(x, dim=1, keepdim=True) + 1e-5
+                x = (x - seq_mean) / torch.sqrt(seq_var)
+        
+            pred = self.model(x.permute(0, 2, 1)).permute(0, 2, 1)
+            # remove the cycle of the input data
+            x0 = x - self.cycleQueue(cycle_index_hourly, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y0 = self.model(x0.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x1 = x - self.cycleQueue(cycle_index_daily, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y1 = self.model(x1.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x2 = x - self.cycleQueue(cycle_index_weekly, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y2 = self.model(x2.permute(0, 2, 1)).permute(0, 2, 1)
+
+            # remove the cycle of the input data
+            x3 = x - self.cycleQueue(cycle_index_monthly, self.seq_len)
+
+            # forecasting with channel independence (parameters-sharing)
+            y3 = self.model(x3.permute(0, 2, 1)).permute(0, 2, 1)
+
+            error = self.cycleQueue((cycle_index + self.seq_len) % self.cycle_len, self.pred_len)
+
+            # 初始化一个空的列表来保存每个通道的重构信号
+            reconstructed_signal_list = []
+
+            # 遍历每个通道
+            for i in range(y1.shape[2]):
+            # 获取当前通道的pred y1, y2, y3 和 error
+                current_pred = pred[:, :, i]
+                imfs = torch.stack([y0[:, :, i], y1[:, :, i], y2[:, :, i], y3[:, :, i]], dim=2) 
+                current_error = error[:, :, i]  # 形状 [B, L]
+        
+                # 通过 DRNet 计算当前通道的重构信号和权重
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
+                # 计算重构信号
+                channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
+
+                # 将每个通道的重构信号添加到列表中
+                reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
+
+                # 将每个通道的重构信号拼接起来
+                reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
+
+                # add back the cycle of the output data
                 y = reconstructed_signal
             
             # instance denorm
@@ -350,7 +550,7 @@ class Model(nn.Module):
             cycle_index_weekly = cycle_index_weekly[:, -1]
             cycle_index_monthly = cycle_index_monthly[:, -1]
             cycle_index_yearly = cycle_index_yearly[:, -1]
-            cycle_index = cycle_index_daily + cycle_index_weekly + cycle_index_monthly + cycle_index_yearly  # 合并每日、每周、每月和每年周期
+            cycle_index = cycle_index_daily + cycle_index_weekly + cycle_index_monthly + cycle_index_yearly  # 合并
 
             # instance norm
             if self.use_revin:
@@ -396,12 +596,12 @@ class Model(nn.Module):
             for i in range(y1.shape[2]):
             # 获取当前通道的pred y1, y2, y3 和 error
                 current_pred = pred[:, :, i]
-                imfs = torch.stack([y1[:, :, i], y2[:, :, i], y3[:, :, i], y4[:, :, i]], dim=2)  # 形状 [B, L, 2]
+                imfs = torch.stack([y1[:, :, i], y2[:, :, i], y3[:, :, i], y4[:, :, i]], dim=2)  
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
                 reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
-                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  # 形状 [256, 336, 3]
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
                 channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
@@ -409,11 +609,10 @@ class Model(nn.Module):
                 # 将每个通道的重构信号添加到列表中
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
 
-                # 将每个通道的重构信号拼接起来，得到 [B, L, 9]
+                # 将每个通道的重构信号拼接起来
                 reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
 
                 # add back the cycle of the output data
-                    # y = y1 + y2 + error
                 y = reconstructed_signal
             
             # instance denorm
@@ -431,7 +630,7 @@ class Model(nn.Module):
             cycle_index_weekly = cycle_index_weekly[:, -1]
             cycle_index_monthly = cycle_index_monthly[:, -1]
             cycle_index_yearly = cycle_index_yearly[:, -1]
-            cycle_index = cycle_index_hourly + cycle_index_daily + cycle_index_weekly + cycle_index_monthly + cycle_index_yearly  # 合并每日、每周、每月和每年周期
+            cycle_index = cycle_index_hourly + cycle_index_daily + cycle_index_weekly + cycle_index_monthly + cycle_index_yearly  # 合并每时、每日、每周、每月和每年周期
 
             # instance norm
             if self.use_revin:
@@ -477,12 +676,12 @@ class Model(nn.Module):
             for i in range(y1.shape[2]):
             # 获取当前通道的pred y1, y2, y3 和 error
                 current_pred = pred[:, :, i]
-                imfs = torch.stack([y0[:, :, i], y1[:, :, i], y2[:, :, i], y3[:, :, i], y4[:, :, i]], dim=2)  # 形状 [B, L, 2]
+                imfs = torch.stack([y0[:, :, i], y1[:, :, i], y2[:, :, i], y3[:, :, i], y4[:, :, i]], dim=2)  
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
                 reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
-                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  # 形状 [256, 336, 3]
+                pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
                 channel_reconstructed = (weights * pred_imfs_error).sum(dim=2)  # 沿着通道维度求和
@@ -490,11 +689,10 @@ class Model(nn.Module):
                 # 将每个通道的重构信号添加到列表中
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1))  # 形状为 [B, L, 1]
 
-                # 将每个通道的重构信号拼接起来，得到 [B, L, 9]
+                # 将每个通道的重构信号拼接起来
                 reconstructed_signal = torch.cat(reconstructed_signal_list, dim=2)
 
                 # add back the cycle of the output data
-                    # y = y1 + y2 + error
                 y = reconstructed_signal
             
             # instance denorm
