@@ -12,7 +12,7 @@ class Exp_Basic(object):
     def _build_model(self):
         raise NotImplementedError
         return None
-
+    '''
     def _acquire_device(self):
         if self.args.use_gpu:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(
@@ -23,6 +23,22 @@ class Exp_Basic(object):
             device = torch.device('cpu')
             print('Use CPU')
         return device
+    '''
+    def _acquire_device(self):
+        if self.args.use_gpu:
+            if self.args.use_multi_gpu:
+                # 如果使用多个 GPU，创建一个以逗号分隔的设备 ID 字符串
+                self.device = torch.device(f'cuda:{self.args.device_ids[0]}')  # 使用第一个 GPU 作为主设备
+                print(f'Use multiple GPUs: {self.args.devices}')
+            else:
+                # 单 GPU 的情况
+                self.device = torch.device(f'cuda:{self.args.gpu}')
+                print(f'Use single GPU: cuda:{self.args.gpu}')
+        else:
+            self.device = torch.device('cpu')
+            print('Use CPU')
+
+        return self.device
 
     def _get_data(self):
         pass

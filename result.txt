@@ -3090,3 +3090,6 @@ mse:0.2885441780090332, mae:0.3559200167655945
 
 Electricity_336_1688_Multiscale_DRPK_custom_ftM_sl336_pl1688_cycle168_cycle_pattern_daily+weekly+monthly+yearly_nums_4_mlp_seed2024  
 mse:0.2929931581020355, mae:0.3616540729999542
+
+Electricity_720_1688_Multiscale_DRPK_custom_ftM_sl720_pl1688_cycle168_cycle_pattern_daily+weekly+monthly+yearly_nums_4_mlp_seed2024  
+mse:0.28771165013313293, mae:0.36311325430870056

@@ -445,7 +445,7 @@ class Model(nn.Module):
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
-                reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
                 pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
@@ -600,7 +600,7 @@ class Model(nn.Module):
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
-                reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
                 pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号
@@ -680,7 +680,7 @@ class Model(nn.Module):
                 current_error = error[:, :, i]  # 形状 [B, L]
         
                 # 通过 DRNet 计算当前通道的重构信号和权重
-                reconstructed_signal, weights = self.drn(current_pred, imfs, current_error, imfs.shape[2])
+                reconstructed_signal, weights = self.drpkn(current_pred, imfs, current_error, imfs.shape[2])
                 pred_imfs_error = torch.cat([current_pred.unsqueeze(-1), imfs, current_error.unsqueeze(-1)], dim=2)  
 
                 # 计算重构信号

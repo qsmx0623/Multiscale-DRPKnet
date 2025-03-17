@@ -1,6 +1,6 @@
 model_name=Multiscale_DRPK
 
-root_path_name=/home/qsmx/Data/
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Traffic/
 data_path_name=Traffic.csv
 model_id_name=Traffic
 data_name=custom
@@ -28,12 +28,12 @@ do
       --cycle_pattern $cycle_pattern\
       --pattern_nums 4\
       --model_type $model_type \
-      --train_epochs 30 \
+      --train_epochs 1 \
       --patience 5 \
       --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
       --use_gpu True \
-      --gpu 0\
-      --devices '0,1' \
+      --gpu 5\
+      --devices '5,6' \
       --use_multi_gpu 
 done
 done

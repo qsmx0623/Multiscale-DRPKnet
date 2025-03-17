@@ -20,6 +20,8 @@ import numpy as np
 
 warnings.filterwarnings('ignore')
 
+from fvcore.nn import FlopCountAnalysis
+from torchinfo import summary
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -44,10 +46,34 @@ class Exp_Main(Exp_Basic):
             'Multiscale_DRPK':Multiscale_DRPK
         }
         model = model_dict[self.args.model].Model(self.args).float()
-
+        '''
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
+            return model
+        '''
+        # 如果使用多个 GPU，使用 nn.DataParallel
+        if self.args.use_multi_gpu and self.args.use_gpu:
+            model = model.to(f'cuda:{self.args.device_ids[0]}')
+            model = nn.DataParallel(model, device_ids=[int(id_) for id_ in self.args.devices.split(',')])
+
+        # 如果使用单 GPU
+        elif self.args.use_gpu:
+            model = model.to(f'cuda:{self.args.gpu}')
+
+        #如果不使用 GPU，使用 CPU
+        else:
+            model = model.to('cpu')
         return model
+    
+    # 记录模型参数大小的函数
+    def log_model_params(self, model):
+        model_params = sum(p.numel() for p in model.parameters())
+        print(f'Model Parameters: {model_params / 1e6}M')  # 输出模型参数（以百万为单位）
+
+    def log_flops(self, model, batch_x, batch_x_mark):
+        model.eval()
+        # 使用 torchinfo.summary 输出模型的 FLOPs 和其他参数信息
+        summary(model, input_data=(batch_x, batch_x_mark), verbose=1)  # 确保传入两个张量
 
     def _get_data(self, flag):
         data_set, data_loader = data_provider(self.args, flag)
@@ -147,7 +173,7 @@ class Exp_Main(Exp_Basic):
 
             self.model.train()
             epoch_time = time.time()
-            # max_memory = 0
+            max_memory = 0
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch_cycle) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
@@ -219,8 +245,8 @@ class Exp_Main(Exp_Basic):
                     loss.backward()
                     model_optim.step()
 
-                # current_memory = torch.cuda.max_memory_allocated() / 1024 ** 2
-                # max_memory = max(max_memory, current_memory)
+                current_memory = torch.cuda.max_memory_allocated(self.device) / 1024 ** 2
+                max_memory = max(max_memory, current_memory)
 
                 if self.args.lradj == 'TST':
                     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
@@ -242,13 +268,14 @@ class Exp_Main(Exp_Basic):
                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
             else:
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
-
+        self.log_model_params(self.model)
+        self.log_flops(self.model, batch_x, batch_x_mark)
         best_model_path = path + '/' + 'checkpoint.pth'
         device = torch.device(f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else 'cpu')
         self.model.load_state_dict(torch.load(best_model_path, map_location=device))
         #self.model.load_state_dict(torch.load(best_model_path))
 
-        # print(f"Max Memory (MB): {max_memory}")
+        print(f"Max Memory (MB): {max_memory}")
 
         return self.model
 
