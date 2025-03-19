@@ -1,15 +1,16 @@
-model_name=CycleNet
+model_name=Multiscale_DRPK
 
-root_path_name=./dataset/
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTm1/
 data_path_name=ETTm1.csv
 model_id_name=ETTm1
 data_name=ETTm1
+cycle_pattern=daily
 
 model_type='mlp'
 seq_len=96
-for pred_len in 96 192 336 720
+for pred_len in 96
 do
-for random_seed in 2024 2025 2026 2027 2028
+for random_seed in 2024
 do
     python -u run.py \
       --is_training 1 \
@@ -23,6 +24,8 @@ do
       --pred_len $pred_len \
       --enc_in 7 \
       --cycle 96 \
+      --cycle_pattern $cycle_pattern\
+      --pattern_nums 1\
       --model_type $model_type \
       --train_epochs 30 \
       --patience 5 \

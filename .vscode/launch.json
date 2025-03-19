@@ -5,17 +5,32 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/run.py",  // 确保路径正确
+            "program": "${workspaceFolder}/run_debug.py",
             "console": "integratedTerminal",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"  // 添加项目根目录到 PYTHONPATH
+                "PYTHONPATH": "${workspaceFolder}"
             },
             "args": [
-                "--is_training", "1",        // 示例值，设置为你的实际值
-                "--model_id", "weather_96_96",        // 示例值，设置为你的实际值
-                "--model", "CycleNet",        // 示例值，设置为你的实际值
-                "--data", "custom"           // 示例值，设置为你的实际值
-            ],
+                "--is_training", "1",
+                "--model_id", "weather_96_96",
+                "--model", "Multiscale_DRPK",
+                "--data", "custom",
+                "--root_path", "/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/",
+                "--data_path", "Weather.csv",
+                "--gpu", "4",
+                "--features", "M",
+                "--pred_len", "96",
+                "--enc_in", "21",
+                "--cycle", "144",
+                "--cycle_pattern", "daily+weekly+monthly+yearly",
+                "--pattern_nums", "4",
+                "--model_type", "mlp",
+                "--train_epochs", "10",
+                "--patience", "5",
+                "--itr", "1",
+                "--batch_size", "256",
+                "--learning_rate", "0.005"
+            ]
         }
     ]
 }

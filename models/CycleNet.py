@@ -2,11 +2,14 @@ import torch
 import torch.nn as nn
 
 class RecurrentCycle(torch.nn.Module):
+    """
+    From the author:
     # Thanks for the contribution of wayhoww.
     # The new implementation uses index arithmetic with modulo to directly gather cyclic data in a single operation,
     # while the original implementation manually rolls and repeats the data through looping.
     # It achieves a significant speed improvement (2x ~ 3x acceleration).
     # See https://github.com/ACAT-SCUT/CycleNet/pull/4 for more details.
+    """
     def __init__(self, cycle_len, channel_size):
         super(RecurrentCycle, self).__init__()
         self.cycle_len = cycle_len
@@ -15,7 +18,7 @@ class RecurrentCycle(torch.nn.Module):
 
     def forward(self, index, length):
         gather_index = (index.view(-1, 1) + torch.arange(length, device=index.device).view(1, -1)) % self.cycle_len    
-        return self.data[gather_index]
+        return self.data[gather_index.long()]
 
 
 class Model(nn.Module):
@@ -42,9 +45,10 @@ class Model(nn.Module):
                 nn.Linear(self.d_model, self.pred_len)
             )
 
-    def forward(self, x, cycle_index):
+    def forward(self, x, x_mark):
         # x: (batch_size, seq_len, enc_in), cycle_index: (batch_size,)
-
+        cycle_index = x_mark[..., 0] * self.cycle_len  # 每日周期
+        cycle_index = cycle_index[:, -1]
         # instance norm
         if self.use_revin:
             seq_mean = torch.mean(x, dim=1, keepdim=True)

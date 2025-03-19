@@ -1,6 +1,6 @@
 model_name=CycleNet
 
-root_path_name=./dataset/
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTh1/
 data_path_name=ETTh1.csv
 model_id_name=ETTh1
 data_name=ETTh1
@@ -8,10 +8,8 @@ data_name=ETTh1
 
 model_type='mlp'
 seq_len=96
-for pred_len in 96 192 336 720
-do
-for random_seed in 2024 2025 2026 2027 2028
-do
+for pred_len in 96
+do 
     python -u run.py \
       --is_training 1 \
       --root_path $root_path_name \
@@ -20,15 +18,15 @@ do
       --model $model_name \
       --data $data_name \
       --features M \
+      --steps_per_day 24 \
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 7 \
       --cycle 24 \
       --model_type $model_type \
-      --train_epochs 30 \
+      --train_epochs 10 \
       --patience 5 \
-      --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed
-done
+      --itr 1 --batch_size 256 --learning_rate 0.005 
 done
 
 

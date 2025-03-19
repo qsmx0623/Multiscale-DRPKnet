@@ -1,8 +1,8 @@
 .idea/
 *.pyc
-#*.pth
+*.pth
 dataset/
 test_results/
 results/
-logs/
+train_logs/
 .DS_Store

@@ -1,5 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
+from exp.Decorator import print_to_file
 from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, SegRNN, CycleNet, \
     LDLinear, SparseTSF, RLinear, RMLP, CycleiTransformer, Multiscale_DRPK
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
@@ -20,8 +21,8 @@ import numpy as np
 
 warnings.filterwarnings('ignore')
 
-from fvcore.nn import FlopCountAnalysis
 from torchinfo import summary
+import builtins
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -55,14 +56,6 @@ class Exp_Main(Exp_Basic):
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = model.to(f'cuda:{self.args.device_ids[0]}')
             model = nn.DataParallel(model, device_ids=[int(id_) for id_ in self.args.devices.split(',')])
-
-        # 如果使用单 GPU
-        elif self.args.use_gpu:
-            model = model.to(f'cuda:{self.args.gpu}')
-
-        #如果不使用 GPU，使用 CPU
-        else:
-            model = model.to('cpu')
         return model
     
     # 记录模型参数大小的函数
@@ -106,7 +99,7 @@ class Exp_Main(Exp_Basic):
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
                         if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_cycle)
+                            outputs = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                             outputs = self.model(batch_x)
@@ -117,16 +110,16 @@ class Exp_Main(Exp_Basic):
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
                     if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_cycle)
-                    if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'DRPK'}):
+                        outputs, weights = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                        #else:
+                            #outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
@@ -166,6 +159,13 @@ class Exp_Main(Exp_Basic):
                                             pct_start=self.args.pct_start,
                                             epochs=self.args.train_epochs,
                                             max_lr=self.args.learning_rate)
+        
+
+        folder_path = './train_logs/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        file_name = f"Long_Term_Forecast_{self.args.model}_{self.args.data}_sl{self.args.seq_len}_pl{self.args.pred_len}"
+        print = print_to_file(builtins.print, f"{folder_path}/{file_name}.txt", file_name+"_train")
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -192,9 +192,9 @@ class Exp_Main(Exp_Basic):
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
                         if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_cycle)
-                        if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'DRPK'}):
+                            outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                             outputs = self.model(batch_x)
@@ -211,17 +211,17 @@ class Exp_Main(Exp_Basic):
                         train_loss.append(loss.item())
                 else:
                     if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_cycle)
+                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs = self.model(batch_x, batch_x_mark)
+                        outputs, weights = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
 
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
+                        #else:
+                            #outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
                     # print(outputs.shape,batch_y.shape)
                     f_dim = -1 if self.args.features == 'MS' else 0
                     outputs = outputs[:, -self.args.pred_len:, f_dim:]
@@ -268,14 +268,21 @@ class Exp_Main(Exp_Basic):
                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
             else:
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
+        
+        #获取模型参数
         self.log_model_params(self.model)
         self.log_flops(self.model, batch_x, batch_x_mark)
+        print(f"Max Memory (MB): {max_memory}")
+        print = builtins.print
+        
         best_model_path = path + '/' + 'checkpoint.pth'
         device = torch.device(f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else 'cpu')
         self.model.load_state_dict(torch.load(best_model_path, map_location=device))
         #self.model.load_state_dict(torch.load(best_model_path))
 
-        print(f"Max Memory (MB): {max_memory}")
+        weights_file_path = path + '/' + 'weights.pth'
+        torch.save(weights, weights_file_path)
+        print(f"Saved weights_avg to {weights_file_path}")
 
         return self.model
 
@@ -310,9 +317,9 @@ class Exp_Main(Exp_Basic):
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
                         if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_cycle)
-                        if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'DRPK'}):
+                            outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                             outputs = self.model(batch_x)
@@ -323,17 +330,17 @@ class Exp_Main(Exp_Basic):
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
                     if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_cycle)
+                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs = self.model(batch_x, batch_x_mark)
+                        outputs, weights = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
 
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                        #else:
+                            #outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
                 f_dim = -1 if self.args.features == 'MS' else 0
                 # print(outputs.shape,batch_y.shape)
@@ -381,7 +388,7 @@ class Exp_Main(Exp_Basic):
         f.write('\n')
         f.close()
 
-        np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
+        np.save(folder_path + 'metrics.npy', np.array([mae, mse]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
         np.save(folder_path + 'x.npy', inputx)
@@ -414,9 +421,9 @@ class Exp_Main(Exp_Basic):
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
                         if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_cycle)
-                        if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'DRPK'}):
+                            outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                             outputs = self.model(batch_x)
@@ -427,9 +434,9 @@ class Exp_Main(Exp_Basic):
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
                     if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_cycle)
-                    if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'DRPK'}):
+                        outputs, weights = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
                         outputs = self.model(batch_x)
                     else:

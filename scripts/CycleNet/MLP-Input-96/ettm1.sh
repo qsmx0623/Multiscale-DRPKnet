@@ -1,15 +1,15 @@
 model_name=CycleNet
 
-root_path_name=./dataset/
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTm1/
 data_path_name=ETTm1.csv
 model_id_name=ETTm1
 data_name=ETTm1
 
 model_type='mlp'
 seq_len=96
-for pred_len in 96 192 336 720
+for pred_len in 96
 do
-for random_seed in 2024 2025 2026 2027 2028
+for random_seed in 2024
 do
     python -u run.py \
       --is_training 1 \

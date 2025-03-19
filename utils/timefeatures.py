@@ -7,8 +7,8 @@ from pandas.tseries.frequencies import to_offset
 
 
 class TimeFeature:
-    def __init__(self):
-        pass
+    def __init__(self, steps_per_day=144):  # 添加 steps_per_day 参数
+        self.steps_per_day = steps_per_day
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         pass
@@ -18,15 +18,15 @@ class TimeFeature:
 
 
 class SecondOfMinute(TimeFeature):
-    """Minute of hour encoded as value between [-0.5, 0.5]"""
-
+    """Second of minute encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return index.second / 59.0
 
 
 class MinuteOfHour(TimeFeature):
-    """Minute of hour encoded as value between [-0.5, 0.5]"""
-
+    """Minute of hour encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return index.minute / 59.0
 
@@ -35,56 +35,51 @@ class HourOfDay(TimeFeature):
     """Hour of day encoded as value between [0, 1)"""
 
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
-        # 计算时刻在一天中的比例，类似于 time_of_day
-        steps_per_day = 24  # 一天有 24 个时间步
-        tod = [i % steps_per_day / steps_per_day for i in range(len(index))]
+        # 使用传入的 steps_per_day 来计算
+        tod = [i % self.steps_per_day / self.steps_per_day for i in range(len(index))]
         tod = np.array(tod)
         return tod
 
 
 class DayOfWeek(TimeFeature):
-    """Hour of day encoded as value between [-0.5, 0.5]"""
-
+    """Day of the week encoded as value between [0, 1)"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return index.dayofweek / 7.0 
 
-class DayOfMonth(TimeFeature):
-    """Day of month encoded as value between [-0.5, 0.5]"""
 
+class DayOfMonth(TimeFeature):
+    """Day of month encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return (index.day - 1) / 31.0 
 
 
 class DayOfYear(TimeFeature):
-    """Day of year encoded as value between [-0.5, 0.5]"""
-
+    """Day of year encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return (index.dayofyear - 1) / 366.0 
 
 
 class MonthOfYear(TimeFeature):
-    """Month of year encoded as value between [-0.5, 0.5]"""
-
+    """Month of year encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return (index.month - 1) / 12.0 
 
 
 class WeekOfYear(TimeFeature):
-    """Week of year encoded as value between [-0.5, 0.5]"""
-
+    """Week of year encoded as value between [0, 1]"""
+    
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return (index.isocalendar().week - 1) / 52.0 
 
 
-def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
+def time_features_from_frequency_str(freq_str: str, steps_per_day=24) -> List[TimeFeature]:
     """
     Returns a list of time features that will be appropriate for the given frequency string.
-    Parameters
-    ----------
-    freq_str
-        Frequency string of the form [multiple][granularity] such as "12H", "5min", "1D" etc.
     """
-
     features_by_offsets = {
         offsets.YearEnd: [],
         offsets.QuarterEnd: [MonthOfYear],
@@ -92,9 +87,8 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
         offsets.Week: [DayOfMonth, WeekOfYear],
         offsets.Day: [DayOfWeek, DayOfMonth, DayOfYear],
         offsets.BusinessDay: [DayOfWeek, DayOfMonth, DayOfYear],
-        offsets.Hour: [MinuteOfHour,HourOfDay, DayOfWeek, DayOfMonth, DayOfYear],
+        offsets.Hour: [HourOfDay, DayOfWeek, DayOfMonth, DayOfYear],
         offsets.Minute: [
-            MinuteOfHour,
             HourOfDay,
             DayOfWeek,
             DayOfMonth,
@@ -114,7 +108,8 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
 
     for offset_type, feature_classes in features_by_offsets.items():
         if isinstance(offset, offset_type):
-            return [cls() for cls in feature_classes]
+            # 在这里传递 steps_per_day 参数
+            return [cls(steps_per_day) for cls in feature_classes]
 
     supported_freq_msg = f"""
     Unsupported frequency {freq_str}
@@ -133,5 +128,6 @@ def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
     raise RuntimeError(supported_freq_msg)
 
 
-def time_features(dates, freq='h'):
-    return np.vstack([feat(dates) for feat in time_features_from_frequency_str(freq)])
+def time_features(dates, freq='h', steps_per_day=144):
+    return np.vstack([feat(dates) for feat in time_features_from_frequency_str(freq, steps_per_day)])
+

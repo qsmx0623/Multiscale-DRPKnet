@@ -25,22 +25,21 @@ parser.add_argument('--features', type=str, default='M',
 parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
 parser.add_argument('--freq', type=str, default='h',
                     help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
+parser.add_argument('--steps_per_day', type=int, default=144, help='steps_per_day')
 parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
 
 # forecasting task
 parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
 parser.add_argument('--label_len', type=int, default=0, help='start token length')  #fixed
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
-parser.add_argument('--seasonal_patterns', type=str, default='Monthly', help='subset for M4')
-parser.add_argument('--inverse', action='store_true', help='inverse output data', default=False)
 
 # CycleNet.
 parser.add_argument('--cycle', type=int, default=144, help='cycle length')
 parser.add_argument('--model_type', type=str, default='mlp', help='model type, options: [linear, mlp]')
 parser.add_argument('--use_revin', type=int, default=1, help='1: use revin or 0: no revin')
 
-#Multiscale_DRPK
-parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily OR daily+weekly+monthly OR daily+weekly+monthly+yearly]')
+# DRPK
+parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily OR daily+weekly OR daily+weekly+monthly]')
 parser.add_argument('--pattern_nums', type=int, default=1, help='time_pattern_nums')
 
 
@@ -106,9 +105,9 @@ parser.add_argument('--use_amp', action='store_true', help='use automatic mixed 
 
 # GPU
 parser.add_argument('--use_gpu', type=bool, default=True, help='use gpu')
-parser.add_argument('--gpu', type=int, default=5, help='gpu')
+parser.add_argument('--gpu', type=int, default=0, help='gpu')
 parser.add_argument('--use_multi_gpu', action='store_true', help='use multiple gpus', default=False)
-parser.add_argument('--devices', type=str, default='5,6', help='device ids of multile gpus')
+parser.add_argument('--devices', type=str, default='0,1', help='device ids of multile gpus')
 parser.add_argument('--test_flop', action='store_true', default=False, help='See utils/tools for usage')
 
 args = parser.parse_args()
