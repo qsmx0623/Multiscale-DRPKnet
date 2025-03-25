@@ -1,16 +1,15 @@
-model_name=Multiscale_DRPK
+model_name=CycleNet
 
-root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
-data_path_name=Weather.csv
-model_id_name=weather
-data_name=custom
-cycle_pattern=hourly+daily+weekly+monthly+yearly
+root_path_name=./dataset/
+data_path_name=ETTh2.csv
+model_id_name=ETTh2
+data_name=ETTh2
 
 model_type='mlp'
-seq_len=336
-for pred_len in 96 192 336 720 960 1024 1240 1688
+seq_len=96
+for pred_len in 96 192 336 720
 do
-for random_seed in 2024
+for random_seed in 2024 2025 2026 2027 2028
 do
     python -u run.py \
       --is_training 1 \
@@ -19,19 +18,16 @@ do
       --model_id $model_id_name'_'$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
-      --freq 10min\
       --features M \
-      --gpu 1 \
       --seq_len $seq_len \
       --pred_len $pred_len \
-      --enc_in 21 \
-      --cycle 144 \
-      --cycle_pattern $cycle_pattern\
-      --pattern_nums 5\
+      --enc_in 7 \
+      --cycle 24 \
       --model_type $model_type \
-      --train_epochs 50 \
+      --train_epochs 30 \
       --patience 5 \
       --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed
 done
 done
+
 

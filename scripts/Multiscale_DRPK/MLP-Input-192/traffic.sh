@@ -1,14 +1,13 @@
 model_name=Multiscale_DRPK
 
-root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
-data_path_name=Weather.csv
-model_id_name=weather
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Traffic/
+data_path_name=Traffic.csv
+model_id_name=Traffic
 data_name=custom
-cycle_pattern=daily+weekly+monthly
-pattern_nums=3
+cycle_pattern=daily+weekly+monthly+yearly
 
 model_type='mlp'
-seq_len=720
+seq_len=96
 for pred_len in 96 192 336 720 960 1024 1240 1688
 do
 for random_seed in 2024
@@ -20,21 +19,21 @@ do
       --model_id $model_id_name'_'$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
+      --freq h\
       --features M \
-      --steps_per_day 144 \
       --seq_len $seq_len \
       --pred_len $pred_len \
-      --enc_in 21 \
-      --cycle 144 \
-      --cycle_pattern $cycle_pattern \
-      --pattern_nums $pattern_nums \
+      --enc_in 862 \
+      --cycle 168 \
+      --cycle_pattern $cycle_pattern\
+      --pattern_nums 4\
       --model_type $model_type \
-      --train_epochs 50 \
-      --patience 10 \
-      --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
-      --gpu 1 \
-      --device '1,2,3' \
+      --train_epochs 1 \
+      --patience 5 \
+      --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
+      --use_gpu True \
+      --gpu 5\
+      --devices '5,6' \
       --use_multi_gpu 
 done
 done
-

@@ -226,10 +226,11 @@ class Model(nn.Module):
                 weights = self.drpkn(current_pred.unsqueeze(-1), current_error, current_cycle.unsqueeze(-1), K = self.pattern_num)
                 pred_error_cycle = torch.cat([current_pred.unsqueeze(-1), current_error, current_cycle.unsqueeze(-1)], dim=2)
                  
-                weights_avg = torch.mean(weights, dim=0)  # [L, 1+K+1]
-                # print(weights_avg)
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # [B, L, 1+K+1]
+                # 计算重构信号
+                 # 计算重构信号
+                channel_reconstructed = (weights_avg * pred_error_cycle).sum(dim=2)  # 沿着通道维度求和
                 reconstructed_signal_list.append(channel_reconstructed.unsqueeze(-1)) 
                 # 将每个通道的重构信号拼接起来，得到 [B, L, enc_in]
                 y = torch.cat(reconstructed_signal_list, dim=2)

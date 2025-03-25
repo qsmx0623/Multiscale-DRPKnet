@@ -4,8 +4,8 @@ root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
 data_path_name=Weather.csv
 model_id_name=weather
 data_name=custom
-cycle_pattern=hourly+daily+weekly+monthly+yearly
-gpu_id=7
+cycle_pattern=daily+weekly+monthly
+pattern_nums=3
 
 model_type='mlp'
 seq_len=48
@@ -20,19 +20,21 @@ do
       --model_id $model_id_name'_'$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
-      --freq 10min\
       --features M \
-      --gpu $gpu_id \
+      --steps_per_day 144 \
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 21 \
       --cycle 144 \
-      --cycle_pattern $cycle_pattern\
-      --pattern_nums 5\
+      --cycle_pattern $cycle_pattern \
+      --pattern_nums $pattern_nums \
       --model_type $model_type \
       --train_epochs 30 \
-      --patience 5 \
-      --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed
+      --patience 10 \
+      --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
+      --gpu 1 \
+      --device '1,2,3' \
+      --use_multi_gpu 
 done
 done
 

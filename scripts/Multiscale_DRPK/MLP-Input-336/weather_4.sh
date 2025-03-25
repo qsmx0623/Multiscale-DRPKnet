@@ -4,12 +4,12 @@ root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
 data_path_name=Weather.csv
 model_id_name=weather
 data_name=custom
-cycle_pattern=daily
-pattern_nums=1
+cycle_pattern=daily+weekly+monthly+yearly
+pattern_nums=4
 
 model_type='mlp'
-seq_len=96
-for pred_len in 96
+seq_len=336
+for pred_len in 96 192 336 720 960 1024 1240 1688
 do
 for random_seed in 2024
 do
@@ -29,12 +29,12 @@ do
       --cycle_pattern $cycle_pattern \
       --pattern_nums $pattern_nums \
       --model_type $model_type \
-      --train_epochs 50 \
+      --train_epochs 30 \
       --patience 10 \
       --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
       --gpu 5 \
       --device '5,6,7' \
-      --use_multi_gpu
+      --use_multi_gpu 
 done
 done
 
