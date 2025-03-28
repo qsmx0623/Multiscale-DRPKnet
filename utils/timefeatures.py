@@ -74,6 +74,13 @@ class WeekOfYear(TimeFeature):
     
     def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
         return (index.isocalendar().week - 1) / 52.0 
+    
+class SeasonOfYear(TimeFeature):
+    """Season of year encoded as value between [-0.5, 0.5]"""
+
+    def __call__(self, index: pd.DatetimeIndex) -> np.ndarray:
+        #return (index.month // 3) / 3.0 - 0.5
+        return (((index.month // 3) + 3) % 4) / 3.0 - 0.5
 
 
 def time_features_from_frequency_str(freq_str: str, steps_per_day=24) -> List[TimeFeature]:

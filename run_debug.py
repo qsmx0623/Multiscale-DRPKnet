@@ -13,6 +13,7 @@ parser.add_argument('--random_seed', type=int, default=2024, help='random seed')
 # basic config
 parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
 parser.add_argument('--model_id', type=str, required=True, default='test', help='model id')
+parser.add_argument('--model_id_name', type=str, required=True, default='ETTh1', help='model id name')
 parser.add_argument('--model', type=str, required=True, default='Autoformer',
                     help='model name, options: [Autoformer, Informer, Transformer]')
 
@@ -33,13 +34,11 @@ parser.add_argument('--seq_len', type=int, default=96, help='input sequence leng
 parser.add_argument('--label_len', type=int, default=0, help='start token length')  #fixed
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
 
-# CycleNet.
+# DRPK
 parser.add_argument('--cycle', type=int, default=144, help='cycle length')
 parser.add_argument('--model_type', type=str, default='mlp', help='model type, options: [linear, mlp]')
 parser.add_argument('--use_revin', type=int, default=1, help='1: use revin or 0: no revin')
-
-# DRPK
-parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily OR daily+weekly OR daily+weekly+monthly]')
+parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily, daily+weekly, daily+monthly, daily+yearly, daily+weekly+monthly, daily+weekly+yearly, daily+monthly+yearly, daily+weekly+monthly+yearly]')
 parser.add_argument('--pattern_nums', type=int, default=1, help='time_pattern_nums')
 
 
@@ -58,15 +57,6 @@ parser.add_argument('--subtract_last', type=int, default=0, help='0: subtract me
 parser.add_argument('--decomposition', type=int, default=0, help='decomposition; True 1 False 0')
 parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
 parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
-
-# SegRNN
-parser.add_argument('--rnn_type', default='gru', help='rnn_type')
-parser.add_argument('--dec_way', default='pmf', help='decode way')
-parser.add_argument('--seg_len', type=int, default=48, help='segment length')
-parser.add_argument('--channel_id', type=int, default=1, help='Whether to enable channel position encoding')
-
-# SparseTSF
-parser.add_argument('--period_len', type=int, default=24, help='period_len')
 
 # Formers 
 parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')

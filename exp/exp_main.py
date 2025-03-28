@@ -1,8 +1,8 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from exp.Decorator import print_to_file
-from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, SegRNN, CycleNet, \
-    LDLinear, SparseTSF, RLinear, RMLP, CycleiTransformer, Multiscale_DRPK
+from models import Informer, Autoformer, DLinear, Linear, PatchTST, \
+    RLinear, RMLP, Multiscale_DRPK
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -31,19 +31,12 @@ class Exp_Main(Exp_Basic):
     def _build_model(self):
         model_dict = {
             'Autoformer': Autoformer,
-            'Transformer': Transformer,
             'Informer': Informer,
             'DLinear': DLinear,
-            'NLinear': NLinear,
             'Linear': Linear,
             'PatchTST': PatchTST,
-            'SegRNN': SegRNN,
-            'CycleNet': CycleNet,
-            'LDLinear': LDLinear,
-            'SparseTSF': SparseTSF,
             'RLinear': RLinear,
             'RMLP': RMLP,
-            'CycleiTransformer': CycleiTransformer,
             'Multiscale_DRPK':Multiscale_DRPK
         }
         model = model_dict[self.args.model].Model(self.args).float()
@@ -98,10 +91,10 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'DRPK'}):
+                            outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
-                                 {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                                 {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -109,11 +102,9 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs, weights = self.model(batch_x, batch_x_mark)
-                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -160,12 +151,12 @@ class Exp_Main(Exp_Basic):
                                             epochs=self.args.train_epochs,
                                             max_lr=self.args.learning_rate)
         
-
+        '''
         folder_path = './train_logs/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         file_name = f"Long_Term_Forecast_{self.args.model}_{self.args.data}_sl{self.args.seq_len}_pl{self.args.pred_len}"
-        print = print_to_file(builtins.print, f"{folder_path}/{file_name}.txt", file_name+"_train")
+        print = print_to_file(builtins.print, f"{folder_path}/{file_name}.txt", file_name+"_train")'''
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -191,12 +182,10 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_x_mark)
                         if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
-                                 {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                                 {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -210,11 +199,9 @@ class Exp_Main(Exp_Basic):
                         loss = criterion(outputs, batch_y)
                         train_loss.append(loss.item())
                 else:
-                    if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs, weights = self.model(batch_x, batch_x_mark)
-                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -273,7 +260,7 @@ class Exp_Main(Exp_Basic):
         self.log_model_params(self.model)
         self.log_flops(self.model, batch_x, batch_x_mark)
         print(f"Max Memory (MB): {max_memory}")
-        print = builtins.print
+        #print = builtins.print
         
         best_model_path = path + '/' + 'checkpoint.pth'
         device = torch.device(f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else 'cpu')
@@ -316,12 +303,10 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_x_mark)
                         if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
-                                 {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                                 {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -329,11 +314,9 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs, weights = self.model(batch_x, batch_x_mark)
-                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -381,12 +364,16 @@ class Exp_Main(Exp_Basic):
 
         mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
         print('mse:{}, mae:{}'.format(mse, mae))
-        f = open("result.txt", 'a')
-        f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}'.format(mse, mae))
-        f.write('\n')
-        f.write('\n')
-        f.close()
+        model_id_name = self.args.model_id_name  # 从 self.args.data 获取数据集名称
+        if not os.path.exists('metric'):
+            os.makedirs('metric')
+        result_filename = os.path.join('metric', f"result_{model_id_name}.txt")
+        with open(result_filename, 'a') as f:
+            f.write(setting + "  \n")
+            f.write('mse:{}, mae:{}'.format(mse, mae))
+            f.write('\n')
+            f.write('\n')
+            f.close()
 
         np.save(folder_path + 'metrics.npy', np.array([mae, mse]))
         np.save(folder_path + 'pred.npy', preds)
@@ -420,12 +407,10 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'Cycle'}):
-                            outputs = self.model(batch_x, batch_x_mark)
                         if any(substr in self.args.model for substr in {'DRPK'}):
                             outputs, weights = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
-                                 {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                                 {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -433,11 +418,9 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'Cycle'}):
-                        outputs = self.model(batch_x, batch_x_mark)
                     if any(substr in self.args.model for substr in {'DRPK'}):
                         outputs, weights = self.model(batch_x, batch_x_mark)
-                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'SegRNN', 'TST', 'SparseTSF'}):
+                    elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:

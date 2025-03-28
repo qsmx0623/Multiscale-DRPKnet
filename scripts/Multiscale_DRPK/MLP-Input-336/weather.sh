@@ -1,16 +1,15 @@
 model_name=Multiscale_DRPK
 
-root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Electricity/
-data_path_name=Electricity.csv
-model_id_name=Electricity
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
+data_path_name=Weather.csv
+model_id_name=weather
 data_name=custom
-
-model_type='mlp'
 seq_len=336
+model_type='mlp'
 
 # 定义要循环的cycle_pattern和pattern_nums
-cycle_patterns=("daily" "daily+weekly" "daily+monthly" "daily+yearly" "daily+weekly+monthly" "daily+weekly+yearly" "daily+monthly+yearly" "daily+weekly+monthly+yearly")
-pattern_nums=(1 2 2 2 3 3 3 4)
+cycle_patterns=("daily" "daily+weekly" "daily+yearly" "daily+weekly+monthly" "daily+weekly+yearly" "daily+monthly+yearly" "daily+weekly+monthly+yearly")
+pattern_nums=(1 2 2 3 3 3 4)
 
 # 定义要循环的pred_len值
 pred_lens=(96 192 336 720 960 1024 1240 1688)
@@ -31,7 +30,7 @@ do
         for random_seed in 2024
         do
             # 构建搜索模式
-            search_pattern="${model_id_name}_${seq_len}_${pred_len}_${model_name}_${data_name}_ftM_sl${seq_len}_pl${pred_len}_cycle168_cycle_pattern_${cycle_pattern}_nums_${pattern_num}_${model_type}_seed${random_seed}"
+            search_pattern="${model_id_name}_${seq_len}_${pred_len}_${model_name}_${data_name}_ftM_sl${seq_len}_pl${pred_len}_cycle144_cycle_pattern_${cycle_pattern}_nums_${pattern_num}_${model_type}_seed${random_seed}"
             
             # 检查结果文件是否包含该模式
             if grep -q "$search_pattern" "$results_file"; then
@@ -47,23 +46,22 @@ do
                   --model $model_name \
                   --data $data_name \
                   --features M \
-                  --steps_per_day 24 \
+                  --steps_per_day 144 \
                   --seq_len $seq_len \
                   --pred_len $pred_len \
-                  --enc_in 321 \
-                  --cycle 168 \
+                  --enc_in 21 \
+                  --cycle 144 \
                   --cycle_pattern $cycle_pattern \
                   --pattern_nums $pattern_num \
                   --model_type $model_type \
                   --train_epochs 30 \
                   --patience 5 \
-                  --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
-                  --gpu 0 \
-                  --device '0,1,4,5' \
+                  --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
+                  --gpu 2 \
+                  --device '2,3,5,7' \
                   --use_multi_gpu
             fi
         done
     done
 done
-
 
