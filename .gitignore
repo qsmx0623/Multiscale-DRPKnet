@@ -5,5 +5,5 @@ dataset/
 test_results/
 results/
 train_logs/
-mertric/
+metric/
 .DS_Store
