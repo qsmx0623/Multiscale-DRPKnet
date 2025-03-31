@@ -9,8 +9,8 @@ model_type='mlp'
 seq_len=336
 
 # 定义要循环的cycle_pattern和pattern_nums
-cycle_patterns=("daily" "daily+weekly" "daily+monthly" "daily+yearly" "daily+weekly+monthly" "daily+weekly+yearly" "daily+monthly+yearly" "daily+weekly+monthly+yearly")
-pattern_nums=(1 2 2 2 3 3 3 4)
+cycle_patterns=("daily+monthly" "daily+yearly" "daily+weekly+monthly" "daily+weekly+yearly" "daily+monthly+yearly" "daily+weekly+monthly+yearly")
+pattern_nums=(2 2 3 3 3 4)
 
 # 定义要循环的pred_len值
 pred_lens=(96 192 336 720 960 1024 1240 1688)
