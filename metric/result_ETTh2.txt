@@ -19,6 +19,9 @@ mse:0.48489129543304443, mae:0.49296674132347107
 ETTh2_336_1240_Multiscale_DRPK_ETTh2_ftM_sl336_pl1240_cycle24_cycle_pattern_daily+monthly_nums_2_mlp_seed2024  
 mse:0.5182968974113464, mae:0.5124580264091492
 
+ETTh2_336_1688_Multiscale_DRPK_ETTh2_ftM_sl336_pl1688_cycle24_cycle_pattern_daily+monthly_nums_2_mlp_seed2024  
+mse:0.5612977743148804, mae:0.534324586391449
+
 ETTh2_336_96_Multiscale_DRPK_ETTh2_ftM_sl336_pl96_cycle24_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
 mse:0.3049315810203552, mae:0.3615404963493347
 

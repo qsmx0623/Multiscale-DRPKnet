@@ -79,3 +79,18 @@ mse:0.16205669939517975, mae:0.2652623951435089
 Electricity_336_336_Multiscale_DRPK_custom_ftM_sl336_pl336_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
 mse:0.1783709079027176, mae:0.27580422163009644
 
+Electricity_336_720_Multiscale_DRPK_custom_ftM_sl336_pl720_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
+mse:0.21407867968082428, mae:0.3079802989959717
+
+Electricity_336_960_Multiscale_DRPK_custom_ftM_sl336_pl960_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
+mse:0.2426818609237671, mae:0.33069029450416565
+
+Electricity_336_1024_Multiscale_DRPK_custom_ftM_sl336_pl1024_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
+mse:0.25189363956451416, mae:0.33934569358825684
+
+Electricity_336_1240_Multiscale_DRPK_custom_ftM_sl336_pl1240_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
+mse:0.2741778492927551, mae:0.35457926988601685
+
+Electricity_336_1688_Multiscale_DRPK_custom_ftM_sl336_pl1688_cycle168_cycle_pattern_daily+yearly_nums_2_mlp_seed2024  
+mse:0.3040120601654053, mae:0.3736841678619385
+
