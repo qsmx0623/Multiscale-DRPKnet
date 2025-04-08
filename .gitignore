@@ -4,6 +4,7 @@
 dataset/
 test_results/
 results/
-train_logs/
+logs/
 metric/
+checkpoints/
 .DS_Store

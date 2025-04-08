@@ -1,6 +1,5 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from exp.Decorator import print_to_file
 from models import Informer, Autoformer, DLinear, Linear, PatchTST, \
     RLinear, RMLP, Multiscale_DRPK
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
@@ -23,6 +22,19 @@ warnings.filterwarnings('ignore')
 
 from torchinfo import summary
 import builtins
+import sys
+
+# 创建一个Tee类，既输出到控制台也输出到文件
+class Tee:
+    def __init__(self, file_path):
+        self.file = open(file_path, 'a')
+        self.stdout = sys.stdout
+    def write(self, message):
+        self.stdout.write(message)  # 输出到控制台
+        self.file.write(message)     # 输出到文件
+    def flush(self):
+        self.file.flush()  # 确保数据写入文件
+        self.stdout.flush()  # 确保输出到控制台
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -55,10 +67,13 @@ class Exp_Main(Exp_Basic):
     def log_model_params(self, model):
         model_params = sum(p.numel() for p in model.parameters())
         print(f'Model Parameters: {model_params / 1e6}M')  # 输出模型参数（以百万为单位）
-
+    # 记录总的训练时间
+    def log_training_time(self, training_start_time):
+        total_training_time = time.time() - training_start_time
+        print(f"Total Training Time: {total_training_time:.2f} seconds")
     def log_flops(self, model, batch_x, batch_x_mark):
         model.eval()
-        # 使用 torchinfo.summary 输出模型的 FLOPs 和其他参数信息
+        print("FLOPs and Model Summary:")
         summary(model, input_data=(batch_x, batch_x_mark), verbose=1)  # 确保传入两个张量
 
     def _get_data(self, flag):
@@ -126,6 +141,11 @@ class Exp_Main(Exp_Basic):
         return total_loss
 
     def train(self, setting):
+        # 重定向控制台输出到日志文件
+        log_file_path = './logs/' + setting + '.txt'
+        sys.stdout = Tee(log_file_path)
+        print(f"Starting training: {setting}")
+
         train_data, train_loader = self._get_data(flag='train')
         vali_data, vali_loader = self._get_data(flag='val')
         test_data, test_loader = self._get_data(flag='test')
@@ -150,14 +170,7 @@ class Exp_Main(Exp_Basic):
                                             pct_start=self.args.pct_start,
                                             epochs=self.args.train_epochs,
                                             max_lr=self.args.learning_rate)
-        
-        '''
-        folder_path = './train_logs/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-        file_name = f"Long_Term_Forecast_{self.args.model}_{self.args.data}_sl{self.args.seq_len}_pl{self.args.pred_len}"
-        print = print_to_file(builtins.print, f"{folder_path}/{file_name}.txt", file_name+"_train")'''
-
+        training_start_time = time.time()
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             train_loss = []
@@ -257,10 +270,11 @@ class Exp_Main(Exp_Basic):
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
         
         #获取模型参数
+        print("Training complete.")
+        print(f"Max Memory (MB): {max_memory}")
+        self.log_training_time(training_start_time)
         self.log_model_params(self.model)
         self.log_flops(self.model, batch_x, batch_x_mark)
-        print(f"Max Memory (MB): {max_memory}")
-        #print = builtins.print
         
         best_model_path = path + '/' + 'checkpoint.pth'
         device = torch.device(f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else 'cpu')
@@ -269,7 +283,11 @@ class Exp_Main(Exp_Basic):
 
         weights_file_path = path + '/' + 'weights.pth'
         torch.save(weights, weights_file_path)
-        print(f"Saved weights_avg to {weights_file_path}")
+        # print(f"Saved weights_avg to {weights_file_path}")
+
+        # Restore original stdout (console)
+        sys.stdout = sys.__stdout__
+        print("Training logs are saved to:", log_file_path)
 
         return self.model
 

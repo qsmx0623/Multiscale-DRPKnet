@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from layers import DRPK
 
 
-class RecurrentCycle(torch.nn.Module):
+class RecurrentPattern(torch.nn.Module):
     """
     From the author:
     # Thanks for the contribution of wayhoww.
@@ -15,7 +15,7 @@ class RecurrentCycle(torch.nn.Module):
     # See https://github.com/ACAT-SCUT/CycleNet/pull/4 for more details.
     """
     def __init__(self, cycle_len, channel_size):
-        super(RecurrentCycle, self).__init__()
+        super(RecurrentPattern, self).__init__()
         self.cycle_len = cycle_len
         self.channel_size = channel_size
         self.data = torch.nn.Parameter(torch.zeros(cycle_len, channel_size), requires_grad=True)
@@ -42,7 +42,7 @@ class Model(nn.Module):
         self.drpkn = DRPK.DRPKNet(hidden_dim = self.hidden_dim, K = self.pattern_num)
         # self.drn = DRNet(hidden_dim = 64, K=self.pattern_nums) 消融先验知识的实验
 
-        self.cycleQueue = RecurrentCycle(cycle_len=self.cycle_len, channel_size=self.enc_in)
+        self.cycleQueue = RecurrentPattern(cycle_len=self.cycle_len, channel_size=self.enc_in)
 
         assert self.model_type in ['linear', 'mlp']
         if self.model_type == 'linear':

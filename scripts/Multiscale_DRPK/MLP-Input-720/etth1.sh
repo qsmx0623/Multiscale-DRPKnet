@@ -1,15 +1,15 @@
 model_name=Multiscale_DRPK
 
-root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
-data_path_name=Weather.csv
-model_id_name=weather
-data_name=custom
-cycle_pattern=daily+monthly+yearly
-pattern_nums=3
+root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTh1/
+data_path_name=ETTh1.csv
+model_id_name=ETTh1
+data_name=ETTh1
+cycle_pattern=daily
+pattern_nums=1
 
 model_type='mlp'
-seq_len=96
-for pred_len in 960 1024 1240 1688
+seq_len=720
+for pred_len in 96 192 336 720
 do
 for random_seed in 2024
 do
@@ -22,11 +22,11 @@ do
       --model $model_name \
       --data $data_name \
       --features M \
-      --steps_per_day 144 \
+      --steps_per_day 24 \
       --seq_len $seq_len \
       --pred_len $pred_len \
-      --enc_in 21 \
-      --cycle 144 \
+      --enc_in 7 \
+      --cycle 24 \
       --cycle_pattern $cycle_pattern \
       --pattern_nums $pattern_nums \
       --model_type $model_type \
@@ -34,7 +34,7 @@ do
       --patience 10 \
       --itr 1 --batch_size 64 --random_seed $random_seed \
       --gpu 2 \
-      --device '2,3,4,5,6' \
+      --device '2,3' \
       --use_multi_gpu 
 done
 done
