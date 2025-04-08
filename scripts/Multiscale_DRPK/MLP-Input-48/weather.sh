@@ -4,8 +4,8 @@ root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
 data_path_name=Weather.csv
 model_id_name=weather
 data_name=custom
-cycle_pattern=daily+weekly+monthly
-pattern_nums=3
+cycle_pattern=daily+weekly
+pattern_nums=2
 
 model_type='mlp'
 seq_len=48
