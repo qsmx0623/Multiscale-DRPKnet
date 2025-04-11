@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore')
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', steps_per_day=24, data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', cycle=None):
+                 target='OT', scale=True, timeenc=0, freq='h', pattern=None):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -36,7 +36,7 @@ class Dataset_ETT_hour(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.steps_per_day = steps_per_day
-        self.cycle = cycle
+        self.pattern = pattern
 
         self.root_path = root_path
         self.data_path = data_path
@@ -81,8 +81,6 @@ class Dataset_ETT_hour(Dataset):
         self.data_y = data[border1:border2]
         self.data_stamp = data_stamp
 
-        # add cycle
-        self.cycle_index = (np.arange(len(data)) % self.cycle)[border1:border2]
 
     def __getitem__(self, index):
         s_begin = index
@@ -95,9 +93,7 @@ class Dataset_ETT_hour(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        cycle_index = torch.tensor(self.cycle_index[s_end])
-
-        return seq_x, seq_y, seq_x_mark, seq_y_mark, cycle_index
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -109,7 +105,7 @@ class Dataset_ETT_hour(Dataset):
 class Dataset_ETT_minute(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', steps_per_day=96, data_path='ETTm1.csv',
-                 target='OT', scale=True, timeenc=0, freq='t', cycle=None):
+                 target='OT', scale=True, timeenc=0, freq='t', pattern=None):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -131,7 +127,7 @@ class Dataset_ETT_minute(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.steps_per_day = steps_per_day
-        self.cycle = cycle
+        self.pattern = pattern
 
         self.root_path = root_path
         self.data_path = data_path
@@ -178,8 +174,6 @@ class Dataset_ETT_minute(Dataset):
         self.data_y = data[border1:border2]
         self.data_stamp = data_stamp
 
-        # add cycle
-        self.cycle_index = (np.arange(len(data)) % self.cycle)[border1:border2]
 
     def __getitem__(self, index):
         s_begin = index
@@ -192,10 +186,7 @@ class Dataset_ETT_minute(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        cycle_index = torch.tensor(self.cycle_index[s_end])
-
-        return seq_x, seq_y, seq_x_mark, seq_y_mark, cycle_index
-
+        return seq_x, seq_y, seq_x_mark, seq_y_mark 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
 
@@ -206,7 +197,7 @@ class Dataset_ETT_minute(Dataset):
 class Dataset_Custom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', steps_per_day=144, cycle=None):
+                 target='OT', scale=True, timeenc=0, freq='h', steps_per_day=144, pattern=None):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -228,7 +219,7 @@ class Dataset_Custom(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.steps_per_day = steps_per_day
-        self.cycle = cycle
+        self.pattern = pattern
 
         self.root_path = root_path
         self.data_path = data_path
@@ -286,8 +277,6 @@ class Dataset_Custom(Dataset):
         self.data_y = data[border1:border2]
         self.data_stamp = data_stamp
 
-        # add cycle
-        self.cycle_index = (np.arange(len(data)) % self.cycle)[border1:border2]
 
     def __getitem__(self, index):
         s_begin = index
@@ -300,9 +289,7 @@ class Dataset_Custom(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        cycle_index = torch.tensor(self.cycle_index[s_end])
-
-        return seq_x, seq_y, seq_x_mark, seq_y_mark, cycle_index
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
@@ -310,8 +297,6 @@ class Dataset_Custom(Dataset):
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
-
-## TODO add cycle
 class Dataset_Pred(Dataset):
     def __init__(self, root_path, flag='pred', size=None,
                  features='S', data_path='ETTh1.csv',

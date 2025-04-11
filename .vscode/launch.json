@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
@@ -13,22 +14,23 @@
             "args": [
                 "--is_training", "1",
                 "--model_id", "weather_96_96",
-                "--model", "Multiscale_DRPK",
+                "--model", "TERNet",
+                "--model_id_name","weather",
                 "--data", "custom",
                 "--root_path", "/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/",
                 "--data_path", "Weather.csv",
-                "--gpu", "4",
+                "--gpu", "2",
                 "--features", "M",
                 "--pred_len", "96",
                 "--enc_in", "21",
-                "--cycle", "144",
+                "--pattern", "144",
                 "--cycle_pattern", "daily+weekly+monthly+yearly",
                 "--pattern_nums", "4",
                 "--model_type", "mlp",
                 "--train_epochs", "10",
                 "--patience", "5",
                 "--itr", "1",
-                "--batch_size", "256",
+                "--batch_size", "16",
                 "--learning_rate", "0.005"
             ]
         }

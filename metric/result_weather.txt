@@ -172,3 +172,31 @@ mse:0.2447032928466797, mae:0.28627660870552063
 weather_720_720_Multiscale_DRPK_custom_ftM_sl720_pl720_cycle144_cycle_pattern_daily+monthly+yearly_nums_3_mlp_seed2024  
 mse:0.3145962655544281, mae:0.33727747201919556
 
+weather_336_96_TERNet_TST_custom_ftM_sl336_pl96_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.15544822812080383, mae:0.20561917126178741
+
+weather_336_192_TERNet_TST_custom_ftM_sl336_pl192_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.1999700665473938, mae:0.24759416282176971
+
+weather_336_336_TERNet_TST_custom_ftM_sl336_pl336_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.25400832295417786, mae:0.2899261713027954
+
+weather_336_720_TERNet_TST_custom_ftM_sl336_pl720_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.331891804933548, mae:0.3453899919986725
+
+weather_336_960_TERNet_TST_custom_ftM_sl336_pl960_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.34527480602264404, mae:0.3545815646648407
+
+weather_336_1024_TERNet_TST_custom_ftM_sl336_pl1024_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.3562905490398407, mae:0.36395469307899475
+
+weather_336_1240_TERNet_TST_custom_ftM_sl336_pl1240_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.37400534749031067, mae:0.37427252531051636
+
+weather_336_1688_TERNet_TST_custom_ftM_sl336_pl1688_pattern144_cycle_pattern_daily+weekly+yearly_nums_3_mlp_seed2024  
+mse:0.3980148434638977, mae:0.38447704911231995
+
+
+weather_336_96_TERNet_custom_ftM_sl336_pl96_pattern144_cycle_pattern_daily+weekly+monthly+yearly_nums_4_mlp_seed2024  
+mse:0.16694138944149017, mae:0.21930846571922302
+

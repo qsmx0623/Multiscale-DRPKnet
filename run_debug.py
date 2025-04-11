@@ -34,8 +34,8 @@ parser.add_argument('--seq_len', type=int, default=96, help='input sequence leng
 parser.add_argument('--label_len', type=int, default=0, help='start token length')  #fixed
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
 
-# DRPK
-parser.add_argument('--cycle', type=int, default=144, help='cycle length')
+# CWS_Combiner
+parser.add_argument('--pattern', type=int, default=144, help='pattern length')
 parser.add_argument('--model_type', type=str, default='mlp', help='model type, options: [linear, mlp]')
 parser.add_argument('--use_revin', type=int, default=1, help='1: use revin or 0: no revin')
 parser.add_argument('--cycle_pattern', type=str, default='daily', help='options: [daily, daily+weekly, daily+monthly, daily+yearly, daily+weekly+monthly, daily+weekly+yearly, daily+monthly+yearly, daily+weekly+monthly+yearly]')
@@ -69,7 +69,7 @@ parser.add_argument('--e_layers', type=int, default=2, help='num of encoder laye
 parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
 parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
 parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
-parser.add_argument('--factor', type=int, default=1, help='attn factor')
+parser.add_argument('--factor', type=int, default=3, help='attn factor')
 parser.add_argument('--distil', action='store_false',
                     help='whether to use distilling in encoder, using this argument means not using distilling',
                     default=True)
@@ -125,14 +125,14 @@ if args.is_training:
     for ii in range(args.itr):
 
         # setting record of experiments
-        setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
+        setting = '{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
             args.model_id,
             args.model,
             args.data,
             args.features,
             args.seq_len,
             args.pred_len,
-            args.cycle,
+            args.pattern,
             args.cycle_pattern,
             args.pattern_nums,
             args.model_type,
@@ -152,14 +152,14 @@ if args.is_training:
         torch.cuda.empty_cache()
 else:
     ii = 0
-    setting = '{}_{}_{}_ft{}_sl{}_pl{}_cycle{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
+    setting = '{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
         args.model_id,
         args.model,
         args.data,
         args.features,
         args.seq_len,
         args.pred_len,
-        args.cycle,
+        args.pattern,
         args.cycle_pattern,
         args.pattern_nums,
         args.model_type,

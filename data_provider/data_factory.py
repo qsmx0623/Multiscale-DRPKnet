@@ -40,7 +40,7 @@ def data_provider(args, flag):
         target=args.target,
         timeenc=timeenc,
         freq=freq,
-        cycle=args.cycle
+        pattern=args.pattern
     )
     print(flag, len(data_set))
     data_loader = DataLoader(

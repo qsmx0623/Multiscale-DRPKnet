@@ -1,4 +1,4 @@
-model_name=Multiscale_DRPK
+model_name=TERNet
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTh1/
 data_path_name=ETTh1.csv
@@ -26,7 +26,7 @@ do
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 7 \
-      --cycle 24 \
+      --pattern 24 \
       --cycle_pattern $cycle_pattern \
       --pattern_nums $pattern_nums \
       --model_type $model_type \

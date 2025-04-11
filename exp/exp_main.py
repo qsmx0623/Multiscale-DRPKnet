@@ -1,7 +1,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, DLinear, Linear, PatchTST, \
-    RLinear, RMLP, Multiscale_DRPK
+    RLinear, RMLP, TERNet, TERNet_TST, TERNet_DLinear
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -49,7 +49,9 @@ class Exp_Main(Exp_Basic):
             'PatchTST': PatchTST,
             'RLinear': RLinear,
             'RMLP': RMLP,
-            'Multiscale_DRPK':Multiscale_DRPK
+            'TERNet':TERNet,
+            'TERNet_TST':TERNet_TST,
+            'TERNet_DLinear':TERNet_DLinear,
         }
         model = model_dict[self.args.model].Model(self.args).float()
         '''
@@ -92,22 +94,21 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch_cycle) in enumerate(vali_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_cycle = batch_cycle.int().to(self.device)
-
+            
                 # decoder input
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs, weights = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'TER'}):
+                            outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
@@ -117,8 +118,8 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'DRPK'}):
-                        outputs, weights = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'TER'}):
+                        outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
@@ -178,7 +179,7 @@ class Exp_Main(Exp_Basic):
             self.model.train()
             epoch_time = time.time()
             max_memory = 0
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch_cycle) in enumerate(train_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
                 batch_x = batch_x.float().to(self.device)
@@ -186,7 +187,6 @@ class Exp_Main(Exp_Basic):
                 batch_y = batch_y.float().to(self.device)
                 batch_x_mark = batch_x_mark.float().to(self.device) #B,L,TIMESTAMP
                 batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_cycle = batch_cycle.int().to(self.device)
 
                 # decoder input
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
@@ -195,8 +195,8 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs, weights = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'TER'}):
+                            outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
@@ -212,8 +212,8 @@ class Exp_Main(Exp_Basic):
                         loss = criterion(outputs, batch_y)
                         train_loss.append(loss.item())
                 else:
-                    if any(substr in self.args.model for substr in {'DRPK'}):
-                        outputs, weights = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'TER'}):
+                        outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
@@ -274,16 +274,23 @@ class Exp_Main(Exp_Basic):
         print(f"Max Memory (MB): {max_memory}")
         self.log_training_time(training_start_time)
         self.log_model_params(self.model)
-        self.log_flops(self.model, batch_x, batch_x_mark)
+        if any(substr in self.args.model for substr in {'TER'}):
+            self.log_flops(self.model, batch_x, batch_x_mark)
         
         best_model_path = path + '/' + 'checkpoint.pth'
         device = torch.device(f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else 'cpu')
         self.model.load_state_dict(torch.load(best_model_path, map_location=device))
         #self.model.load_state_dict(torch.load(best_model_path))
-
-        weights_file_path = path + '/' + 'weights.pth'
-        torch.save(weights, weights_file_path)
-        # print(f"Saved weights_avg to {weights_file_path}")
+        
+        if any(substr in self.args.model for substr in {'TER'}):
+            weights_file_path = path + '/' + 'weights.pth'
+            torch.save(weights, weights_file_path)
+            error_file_path = path + '/' + 'error.pth'
+            torch.save(error, error_file_path)
+            patterns_path = path + '/' + 'patterns.pth'
+            torch.save(patterns, patterns_path)
+            pred_error_perio_file_path = path + '/' + 'pred_error_perio.pth'
+            torch.save(pred_error_perio, pred_error_perio_file_path)
 
         # Restore original stdout (console)
         sys.stdout = sys.__stdout__
@@ -307,13 +314,12 @@ class Exp_Main(Exp_Basic):
 
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch_cycle) in enumerate(test_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(test_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
 
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_cycle = batch_cycle.int().to(self.device)
 
                 # decoder input
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
@@ -321,8 +327,8 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs, weights = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'TER'}):
+                            outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
@@ -332,8 +338,8 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'DRPK'}):
-                        outputs, weights = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'TER'}):
+                        outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:
@@ -411,12 +417,11 @@ class Exp_Main(Exp_Basic):
 
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, batch_cycle) in enumerate(pred_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pred_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_cycle = batch_cycle.int().to(self.device)
 
                 # decoder input
                 dec_inp = torch.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[2]]).float().to(
@@ -425,8 +430,8 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if any(substr in self.args.model for substr in {'DRPK'}):
-                            outputs, weights = self.model(batch_x, batch_x_mark)
+                        if any(substr in self.args.model for substr in {'TER'}):
+                            outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                         elif any(substr in self.args.model for substr in
                                  {'Linear', 'MLP', 'TST'}):
                             outputs = self.model(batch_x)
@@ -436,8 +441,8 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if any(substr in self.args.model for substr in {'DRPK'}):
-                        outputs, weights = self.model(batch_x, batch_x_mark)
+                    if any(substr in self.args.model for substr in {'TER'}):
+                        outputs, weights, patterns, error, pred_error_perio = self.model(batch_x, batch_x_mark)
                     elif any(substr in self.args.model for substr in {'Linear', 'MLP', 'TST'}):
                         outputs = self.model(batch_x)
                     else:

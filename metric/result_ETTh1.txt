@@ -304,3 +304,28 @@ mse:0.4449576437473297, mae:0.45023313164711
 ETTh1_720_720_Multiscale_DRPK_ETTh1_ftM_sl720_pl720_cycle24_cycle_pattern_daily_nums_1_mlp_seed2024  
 mse:0.4834637939929962, mae:0.488251268863678
 
+
+ETTh1_336_96_TERNet_ETTh1_ftM_sl336_pl96_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.48054686188697815, mae:0.47082123160362244
+
+ETTh1_336_192_TERNet_ETTh1_ftM_sl336_pl192_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.5078074336051941, mae:0.4857467710971832
+
+ETTh1_336_336_TERNet_ETTh1_ftM_sl336_pl336_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.5181542634963989, mae:0.4935338795185089
+
+ETTh1_336_720_TERNet_ETTh1_ftM_sl336_pl720_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.522126317024231, mae:0.5127689242362976
+
+ETTh1_336_960_TERNet_ETTh1_ftM_sl336_pl960_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.5452149510383606, mae:0.5249932408332825
+
+ETTh1_336_1024_TERNet_ETTh1_ftM_sl336_pl1024_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.5512202978134155, mae:0.5292415618896484
+
+ETTh1_336_1240_TERNet_ETTh1_ftM_sl336_pl1240_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.5764045119285583, mae:0.5469833612442017
+
+ETTh1_336_1688_TERNet_ETTh1_ftM_sl336_pl1688_pattern24_cycle_pattern_daily_nums_1_linear_seed2024  
+mse:0.6482024192810059, mae:0.5865355134010315
+

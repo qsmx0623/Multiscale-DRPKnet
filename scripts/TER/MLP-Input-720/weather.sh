@@ -1,4 +1,4 @@
-model_name=Multiscale_DRPK
+model_name=TERNet
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Weather/
 data_path_name=Weather.csv
@@ -8,8 +8,8 @@ cycle_pattern=daily+monthly+yearly
 pattern_nums=3
 
 model_type='mlp'
-seq_len=192
-for pred_len in 1240 1688
+seq_len=720
+for pred_len in 96 192 336 720
 do
 for random_seed in 2024
 do
@@ -26,7 +26,7 @@ do
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 21 \
-      --cycle 144 \
+      --pattern 144 \
       --cycle_pattern $cycle_pattern \
       --pattern_nums $pattern_nums \
       --model_type $model_type \
