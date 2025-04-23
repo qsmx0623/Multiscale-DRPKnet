@@ -5,6 +5,6 @@ dataset/
 test_results/
 results/
 logs/
-metric/
 checkpoints/
+metric/
 .DS_Store
