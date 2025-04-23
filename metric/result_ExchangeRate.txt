@@ -154,3 +154,15 @@ mse:0.36134660243988037, mae:0.44023245573043823
 ExchangeRate_336_720_RLinear_custom_ftM_sl336_pl720_pattern144_cycle_pattern_daily_nums_1_mlp_seed2024  
 mse:0.918686032295227, mae:0.7240103483200073
 
+ExchangeRate_336_96_TERNet_custom_ftM_sl336_pl96_pattern12_cycle_pattern_daily+weekly_nums_2_mlp_seed2024_no_revin  
+mse:0.11300922185182571, mae:0.2498072236776352
+
+ExchangeRate_336_192_TERNet_custom_ftM_sl336_pl192_pattern12_cycle_pattern_daily+weekly_nums_2_mlp_seed2024_no_revin  
+mse:0.2630499303340912, mae:0.38991987705230713
+
+ExchangeRate_336_336_TERNet_custom_ftM_sl336_pl336_pattern12_cycle_pattern_daily+weekly_nums_2_mlp_seed2024_no_revin  
+mse:0.9255315661430359, mae:0.7425847053527832
+
+ExchangeRate_336_720_TERNet_custom_ftM_sl336_pl720_pattern12_cycle_pattern_daily+weekly_nums_2_mlp_seed2024_no_revin  
+mse:3.0497052669525146, mae:1.295933485031128
+

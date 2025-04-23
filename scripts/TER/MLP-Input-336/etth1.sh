@@ -7,7 +7,7 @@ data_path_name=ETTh1.csv
 model_id_name=ETTh1
 data_name=ETTh1
 
-model_type='linear'
+model_type='mlp'
 seq_len=336
 
 # 定义要循环的cycle_pattern和pattern_nums
@@ -60,8 +60,8 @@ do
                   --train_epochs 30 \
                   --patience 10 \
                   --itr 1 --batch_size 256 --random_seed $random_seed \
-                  --gpu 2 \
-                  --device '2,3,4,5,6,7' \
+                  --gpu 1 \
+                  --device '1,2,3,4' \
                   --use_multi_gpu
             fi
         done

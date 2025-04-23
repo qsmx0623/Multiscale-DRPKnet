@@ -1,4 +1,4 @@
-model_name=TERNet
+model_name=TERNet_TST
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Electricity/
 data_path_name=Electricity.csv
@@ -9,11 +9,11 @@ model_type='mlp'
 seq_len=336
 
 # 定义要循环的cycle_pattern和pattern_nums
-cycle_patterns=("daily+weekly+monthly+yearly")
-pattern_nums=(4)
+cycle_patterns=("daily+weekly")
+pattern_nums=(2)
 
 # 定义要循环的pred_len值
-pred_lens=(96 192 336)
+pred_lens=(96 192 336 720 960 1024 1240 1688)
 
 # 结果文件
 results_file="result.txt"
@@ -30,13 +30,6 @@ do
         # 遍历random_seed值
         for random_seed in 2024
         do
-            # 构建搜索模式
-            search_pattern="${model_id_name}_${seq_len}_${pred_len}_${model_name}_${data_name}_ftM_sl${seq_len}_pl${pred_len}_cycle168_cycle_pattern_${cycle_pattern}_nums_${pattern_num}_${model_type}_seed${random_seed}"
-            
-            # 检查结果文件是否包含该模式
-            if grep -q "$search_pattern" "$results_file"; then
-                echo "Results already exist for $search_pattern, skipping..."
-            else
                 # 运行python脚本
                 python -u run.py \
                   --is_training 1 \
@@ -56,12 +49,11 @@ do
                   --pattern_nums $pattern_num \
                   --model_type $model_type \
                   --train_epochs 30 \
-                  --patience 5 \
-                  --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
-                  --gpu 3 \
-                  --device '3,4,5,6' \
+                  --patience 10 \
+                  --itr 1 --batch_size 16 --random_seed $random_seed \
+                  --gpu 5 \
+                  --device '5,6,7' \
                   --use_multi_gpu
-            fi
         done
     done
 done

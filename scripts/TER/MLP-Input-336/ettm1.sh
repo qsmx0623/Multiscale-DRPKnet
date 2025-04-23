@@ -11,11 +11,11 @@ model_type='mlp'
 seq_len=336
 
 # 定义要循环的cycle_pattern和pattern_nums
-cycle_patterns=("daily+weekly+monthly+yearly")
-pattern_nums=(4)
+cycle_patterns=("daily+yearly")
+pattern_nums=(2)
 
 # 定义要循环的pred_len值
-pred_lens=(720)
+pred_lens=(96 192 336 720 960 1024 1240 1688)
 
 # 结果文件
 results_file="result.txt"
@@ -60,8 +60,8 @@ do
                   --train_epochs 30 \
                   --patience 10 \
                   --itr 1 --batch_size 256 --learning_rate 0.002 --random_seed $random_seed \
-                  --gpu 4 \
-                  --device '4,5' \
+                  --gpu 1 \
+                  --device '1,2,3,4' \
                   --use_multi_gpu
             fi
         done

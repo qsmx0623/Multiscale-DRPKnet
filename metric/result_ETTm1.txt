@@ -202,3 +202,27 @@ mse:0.3903379738330841, mae:0.4097541272640228
 ETTm1_336_720_TERNet_ETTm1_ftM_sl336_pl720_pattern96_cycle_pattern_daily+weekly+monthly+yearly_nums_4_mlp_seed2024  
 mse:0.4560268819332123, mae:0.44530540704727173
 
+ETTm1_336_96_TERNet_ETTm1_ftM_sl336_pl96_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.3130267262458801, mae:0.3673466444015503
+
+ETTm1_336_192_TERNet_ETTm1_ftM_sl336_pl192_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.3612857460975647, mae:0.3956616222858429
+
+ETTm1_336_336_TERNet_ETTm1_ftM_sl336_pl336_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.38624444603919983, mae:0.40427348017692566
+
+ETTm1_336_720_TERNet_ETTm1_ftM_sl336_pl720_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.45348358154296875, mae:0.441724568605423
+
+ETTm1_336_960_TERNet_ETTm1_ftM_sl336_pl960_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.4906109571456909, mae:0.46970129013061523
+
+ETTm1_336_1024_TERNet_ETTm1_ftM_sl336_pl1024_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.494636595249176, mae:0.46467724442481995
+
+ETTm1_336_1240_TERNet_ETTm1_ftM_sl336_pl1240_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.5392975211143494, mae:0.48950329422950745
+
+ETTm1_336_1688_TERNet_ETTm1_ftM_sl336_pl1688_pattern96_cycle_pattern_daily+yearly_nums_2_mlp_seed2024_no_revin  
+mse:0.5451201796531677, mae:0.49011853337287903
+
