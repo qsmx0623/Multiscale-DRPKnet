@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from layers import CWS_Combiner
+from layers import WCC_Combiner
 
 
 class RecurrentPattern(torch.nn.Module):
@@ -29,7 +29,7 @@ class Model(nn.Module):
         self.cycle_pattern = configs.cycle_pattern
         self.pattern_num = configs.pattern_nums
         self.hidden_dim = configs.batch_size
-        self.cswnet = CWS_Combiner.CWSNet(hidden_dim = self.hidden_dim, K = self.pattern_num)
+        self.wccnet = WCC_Combiner.WCCNet(hidden_dim = self.hidden_dim, K = self.pattern_num)
 
         self.patternQueue = RecurrentPattern(pattern_len=self.pattern_len, channel_size=self.enc_in)
 
@@ -82,14 +82,17 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(pattern_daily[:, :, i])
                                                  
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error.unsqueeze(-1), current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error.unsqueeze(-1), current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num+2), 1 / (self.pattern_num + 2))
                 pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error.unsqueeze(-1), current_pattern.unsqueeze(-1),], dim=2)  
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 3]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = pred_error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * pred_error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1)) #去掉第二个维度，得到形状[B, 1+K+1]
@@ -144,21 +147,25 @@ class Model(nn.Module):
             for i in range(x.shape[2]):
             # 获取当前通道的pred y1, y2 和 error
                 current_pred = pred[:, :, i]
+                error = torch.stack([x1[:, :, i], x2[:, :, i]], dim=2)
                 current_error = torch.stack([y1[:, :, i], y2[:, :, i]], dim=2)# 形状 [B, L, K]
                 current_pattern = pattern[:, :, i] # 形状 [B, L]
         
-                current_error_list.append(current_error)
+                current_error_list.append(error)
                 # Append patterns to the pattern_list
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i]], dim=2))
 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
-                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                #weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num+2), 1 / (self.pattern_num + 2))
+                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1),], dim=2)  
                  
-                weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
+                weights_avg = torch.mean(weights, dim=1)  # [B, 3]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = pred_error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * pred_error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1)) #去掉第二个维度，得到形状[B, 1+K+1]
@@ -219,8 +226,8 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_monthly[:, :, i]], dim=2))
                 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
                 pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
@@ -287,14 +294,17 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_yearly[:, :, i]], dim=2))
                 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
-                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num+2), 1 / (self.pattern_num + 2))
+                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1),], dim=2)  
                  
-                weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
+                weights_avg = torch.mean(weights, dim=1)  # [B, 3]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = pred_error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * pred_error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1)) #去掉第二个维度，得到形状[B, 1+K+1]
@@ -360,8 +370,8 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i], pattern_monthly[:, :, i]], dim=2))
 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
                 pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
@@ -434,14 +444,17 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i], pattern_yearly[:, :, i]], dim=2))
 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
-                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num+2), 1 / (self.pattern_num + 2))
+                pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1),], dim=2)  
                  
-                weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
+                weights_avg = torch.mean(weights, dim=1)  # [B, 3]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = pred_error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * pred_error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights) 
@@ -508,8 +521,8 @@ class Model(nn.Module):
                 current_error_list.append(error)
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_monthly[:, :, i], pattern_yearly[:, :, i]], dim=2))
 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
                 pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
@@ -587,8 +600,8 @@ class Model(nn.Module):
                 # Append patterns to the pattern_list
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i], pattern_monthly[:, :, i], pattern_yearly[:, :, i]], dim=2))
                 
-                # 通过 CWS 计算当前通道的重构信号和权重
-                weights = self.cswnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # 通过 WCC 计算当前通道的重构信号和权重
+                weights = self.wccnet(current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
                 pred_error_pattern = torch.cat([current_pred.unsqueeze(-1), current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]

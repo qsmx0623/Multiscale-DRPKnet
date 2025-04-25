@@ -34,7 +34,7 @@ parser.add_argument('--seq_len', type=int, default=96, help='input sequence leng
 parser.add_argument('--label_len', type=int, default=0, help='start token length')  #fixed
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
 
-# CWS_Combiner
+# WCC_Combiner
 parser.add_argument('--pattern', type=int, default=144, help='pattern length')
 parser.add_argument('--model_type', type=str, default='mlp', help='model type, options: [linear, mlp]')
 parser.add_argument('--use_revin', type=int, default=1, help='1: use revin or 0: no revin')
@@ -125,8 +125,9 @@ if args.is_training:
     for ii in range(args.itr):
 
         # setting record of experiments
-        setting = '{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
+        setting = '{}_{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
             args.model_id,
+            args.model_id_name,
             args.model,
             args.data,
             args.features,
@@ -152,8 +153,9 @@ if args.is_training:
         torch.cuda.empty_cache()
 else:
     ii = 0
-    setting = '{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
+    setting = '{}_{}_{}_{}_ft{}_sl{}_pl{}_pattern{}_cycle_pattern_{}_nums_{}_{}_seed{}'.format(
         args.model_id,
+        args.model_id_name,
         args.model,
         args.data,
         args.features,

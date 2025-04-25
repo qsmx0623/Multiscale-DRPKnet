@@ -4,7 +4,7 @@ model_name=TERNet
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTm1/
 data_path_name=ETTm1.csv
-model_id_name=ETTm1
+model_id_name=ETTm1_weights_avg
 data_name=ETTm1
 
 model_type='mlp'
@@ -30,7 +30,7 @@ do
     for pred_len in "${pred_lens[@]}"
     do
         # 遍历random_seed值
-        for random_seed in 2026
+        for random_seed in 2024
         do
             # 构建搜索模式
             search_pattern="${model_id_name}_${seq_len}_${pred_len}_${model_name}_${data_name}_ftM_sl${seq_len}_pl${pred_len}_cycle96_cycle_pattern_${cycle_pattern}_nums_${pattern_num}_${model_type}_seed${random_seed}"
@@ -57,11 +57,11 @@ do
                   --cycle_pattern $cycle_pattern \
                   --pattern_nums $pattern_num \
                   --model_type $model_type \
-                  --train_epochs 30 \
-                  --patience 10 \
-                  --itr 1 --batch_size 256 --learning_rate 0.002 --random_seed $random_seed \
-                  --gpu 1 \
-                  --device '1,2,3,4' \
+                  --train_epochs 10 \
+                  --patience 3 \
+                  --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
+                  --gpu 0 \
+                  --device '0,1,2' \
                   --use_multi_gpu
             fi
         done

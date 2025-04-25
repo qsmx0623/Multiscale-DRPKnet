@@ -1,7 +1,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, DLinear, Linear, PatchTST, \
-    RLinear, RMLP, TERNet, TERNet_TST, TERNet_DLinear
+    RLinear, RMLP, TERNet, TERNet_TST, TERNet_DLinear, TERNet_nopk
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -52,6 +52,7 @@ class Exp_Main(Exp_Basic):
             'TERNet':TERNet,
             'TERNet_TST':TERNet_TST,
             'TERNet_DLinear':TERNet_DLinear,
+            'TERNet_nopk':TERNet_nopk
         }
         model = model_dict[self.args.model].Model(self.args).float()
         '''
