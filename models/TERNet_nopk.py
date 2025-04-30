@@ -78,13 +78,16 @@ class Model(nn.Module):
                 pattern_list.append(pattern_daily[:, :, i])
 
                 # 通过 WCC 计算当前通道的重构信号和权重
-                weights = self.wccnet(current_error.unsqueeze(-1), current_pattern.unsqueeze(-1), K=self.pattern_num)
+                # weights = self.wccnet(current_error.unsqueeze(-1), current_pattern.unsqueeze(-1), K=self.pattern_num)
+                weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num + 1), 1 / (self.pattern_num + 1))
                 error_pattern = torch.cat([current_error.unsqueeze(-1), current_pattern.unsqueeze(-1)], dim=2)
 
                 weights_avg = torch.mean(weights, dim=1)  # [B, 3]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值
 
                 # 计算重构信号
+                device = error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1)  # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1))  # 去掉第二个维度，得到形状 [B, 1+K+1]
@@ -145,13 +148,16 @@ class Model(nn.Module):
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i]], dim=2))
 
                 # 通过 WCC 计算当前通道的重构信号和权重
-                weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num +1 ), 1 / (self.pattern_num + 1))
                 error_pattern = torch.cat([current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1)) #去掉第二个维度，得到形状[B, 1+K+1]
@@ -211,13 +217,16 @@ class Model(nn.Module):
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_yearly[:, :, i]], dim=2))
                 
                 # 通过 WCC 计算当前通道的重构信号和权重
-                weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num + 1), 1 / (self.pattern_num + 1))
                 error_pattern = torch.cat([current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights.squeeze(1)) #去掉第二个维度，得到形状[B, 1+K+1]
@@ -283,13 +292,16 @@ class Model(nn.Module):
                 pattern_list.append(torch.stack([pattern_daily[:, :, i], pattern_weekly[:, :, i], pattern_yearly[:, :, i]], dim=2))
 
                 # 通过 WCC 计算当前通道的重构信号和权重
-                weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                # weights = self.wccnet(current_error, current_pattern.unsqueeze(-1), K = self.pattern_num)
+                weights = torch.full((current_error.size(0), current_error.size(1), self.pattern_num + 1), 1 / (self.pattern_num + 1))
                 error_pattern = torch.cat([current_error, current_pattern.unsqueeze(-1)], dim=2)
                  
                 weights_avg = torch.mean(weights, dim=1)  # [B, 1+K+1]
                 weights_avg = weights_avg.unsqueeze(1).expand(-1, self.pred_len, -1)  # 沿着时间维度求均值——因为权重的优化是一个和时间无关的过程
                 
                 # 计算重构信号
+                device = error_pattern.device  # 获取 weights_avg 的设备，确保所有张量都在相同的设备上
+                weights_avg = weights_avg.to(device)
                 channel_reconstructed = (weights_avg * error_pattern).sum(dim=2)  # 沿着通道维度求和
                 weights = torch.unique(weights_avg, dim=1) # 保留时间维度上的不重复样本
                 weights_list.append(weights) 

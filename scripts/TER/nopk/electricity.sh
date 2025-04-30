@@ -2,7 +2,7 @@ model_name=TERNet_nopk
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Electricity/
 data_path_name=Electricity.csv
-model_id_name=Electricity
+model_id_name=Electricity_weights_avg
 data_name=custom
 
 model_type='mlp'
@@ -13,7 +13,7 @@ cycle_patterns=("daily+weekly")
 pattern_nums=(2)
 
 # 定义要循环的pred_len值
-pred_lens=(1688)
+pred_lens=(96 192 336 720 960 1024 1240 1688)
 
 # 结果文件
 results_file="result.txt"
@@ -58,8 +58,8 @@ do
                   --train_epochs 10 \
                   --patience 3 \
                   --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
-                  --gpu 4 \
-                  --device '4,5,6,7' \
+                  --gpu 0 \
+                  --device '0,1,2,3,4,5,6,7' \
                   --use_multi_gpu
             fi
         done

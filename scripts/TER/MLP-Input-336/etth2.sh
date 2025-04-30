@@ -30,7 +30,7 @@ do
     for pred_len in "${pred_lens[@]}"
     do
         # 遍历random_seed值
-        for random_seed in 2028
+        for random_seed in 2024
         do
             # 构建搜索模式
             search_pattern="${model_id_name}_${seq_len}_${pred_len}_${model_name}_${data_name}_ftM_sl${seq_len}_pl${pred_len}_cycle24_cycle_pattern_${cycle_pattern}_nums_${pattern_num}_${model_type}_seed${random_seed}"

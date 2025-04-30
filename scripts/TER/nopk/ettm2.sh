@@ -4,7 +4,7 @@ model_name=TERNet_nopk
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTm2/
 data_path_name=ETTm2.csv
-model_id_name=ETTm2
+model_id_name=ETTm2_weights_avg
 data_name=ETTm2
 
 model_type='mlp'
@@ -57,8 +57,8 @@ do
                   --cycle_pattern $cycle_pattern \
                   --pattern_nums $pattern_num \
                   --model_type $model_type \
-                  --train_epochs 10 \
-                  --patience 5 \
+                  --train_epochs 1 \
+                  --patience 1 \
                   --itr 1 --batch_size 256 --learning_rate 0.005 --random_seed $random_seed \
                   --gpu 4 \
                   --device '4,5,6,7' \

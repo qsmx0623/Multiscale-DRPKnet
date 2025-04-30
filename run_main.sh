@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#bash scripts/TER/nopk/electricity.sh;
+bash scripts/TER/MLP-Input-336/electricity.sh;
 bash scripts/TER/MLP-Input-336/weather.sh
 bash scripts/TER/MLP-Input-336/exchangerate.sh;
 bash scripts/TER/MLP-Input-336/etth1.sh;

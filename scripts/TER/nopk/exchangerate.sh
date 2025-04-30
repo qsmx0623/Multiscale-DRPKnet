@@ -3,7 +3,7 @@
 model_name=TERNet_nopk
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ExchangeRate/
 data_path_name=ExchangeRate.csv
-model_id_name=ExchangeRate
+model_id_name=exchangerate_weights_avg
 data_name=custom
 seq_len=336
 model_type='mlp'

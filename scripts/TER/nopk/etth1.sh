@@ -4,7 +4,7 @@ model_name=TERNet_nopk
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/ETTh1/
 data_path_name=ETTh1.csv
-model_id_name=ETTh1
+model_id_name=etth1_weights_avg
 data_name=ETTh1
 
 model_type='mlp'

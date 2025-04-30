@@ -1,8 +1,8 @@
-model_name=TERNet_nopk
+model_name=TERNet
 
 root_path_name=/home/home_new/qsmx/pycodes/BasicTS/datasets/raw_data/Electricity/
 data_path_name=Electricity.csv
-model_id_name=Electricity
+model_id_name=Electricity_weights_avg_no_revin
 data_name=custom
 
 model_type='mlp'
@@ -56,10 +56,9 @@ do
                   --pattern_nums $pattern_num \
                   --model_type $model_type \
                   --train_epochs 10 \
-                  --patience 3 \
-                  --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
-                  --gpu 4 \
-                  --device '4,5,6,7' \
+                  --itr 1 --batch_size 128 --learning_rate 0.01 --random_seed $random_seed \
+                  --gpu 1 \
+                  --device '1,2,3,4,5,6,7' \
                   --use_multi_gpu
             fi
         done
