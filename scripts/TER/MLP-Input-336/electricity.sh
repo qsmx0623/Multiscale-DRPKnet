@@ -13,7 +13,7 @@ cycle_patterns=("daily+weekly")
 pattern_nums=(2)
 
 # 定义要循环的pred_len值
-pred_lens=(96 192 336 720 960 1024 1240 1688)
+pred_lens=(1688)
 
 # 结果文件
 results_file="result.txt"
@@ -57,9 +57,9 @@ do
                   --model_type $model_type \
                   --train_epochs 30 \
                   --patience 5 \
-                  --itr 1 --batch_size 64 --learning_rate 0.005 --random_seed $random_seed \
-                  --gpu 1 \
-                  --device '1,2,3,4' \
+                  --itr 1 --batch_size 64 --learning_rate 0.001 --random_seed $random_seed \
+                  --gpu 0 \
+                  --device '0,2,6,7' \
                   --use_multi_gpu
             fi
         done

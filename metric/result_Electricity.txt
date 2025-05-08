@@ -274,3 +274,12 @@ mse:0.1690482348203659, mae:0.25959399342536926
 Electricity_336_720_Electricity_TERNet_custom_ftM_sl336_pl720_pattern168_cycle_pattern_daily+weekly_nums_2_mlp_seed2024  
 mse:0.2028338462114334, mae:0.29234662652015686
 
+Electricity_336_960_Electricity_TERNet_custom_ftM_sl336_pl960_pattern168_cycle_pattern_daily+weekly_nums_2_mlp_seed2024  
+mse:0.2262950986623764, mae:0.31277385354042053
+
+Electricity_336_1024_Electricity_TERNet_custom_ftM_sl336_pl1024_pattern168_cycle_pattern_daily+weekly_nums_2_mlp_seed2024  
+mse:0.2306499183177948, mae:0.31595441699028015
+
+Electricity_336_1688_Electricity_TERNet_custom_ftM_sl336_pl1688_pattern168_cycle_pattern_daily+weekly_nums_2_mlp_seed2024  
+mse:0.30532413721084595, mae:0.37267282605171204
+
